@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_0ef520a795fcdd0e
-    entity_id: masked_entity_94965e2c3abc03e0
+    device_id: masked_device_e35f300b779c2460
+    entity_id: masked_entity_4d9ea46d13b1ecbf
     domain: sensor
     trigger: device
     above: 40
@@ -14,10 +14,10 @@
       seconds: 20
   conditions: []
   actions:
-  - action: notify.mobile_app_public_phone_32fa2df23ba1e07e
+  - action: notify.mobile_app_public_phone_3841f601f4cd5ee0
     metadata: {}
     data:
-      message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
+      message: 'PM2.5 is high! Current level: {{ states(''sensor.masked_sensor_ca2c36ba55d6ab95'')
         }} µg/m³'
       data:
         push:
@@ -31,8 +31,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_0ef520a795fcdd0e
-    entity_id: masked_entity_e804aee5413d5c97
+    device_id: masked_device_e35f300b779c2460
+    entity_id: masked_entity_85efad30f158b76c
     domain: sensor
     trigger: device
     above: 1000
@@ -42,10 +42,10 @@
       seconds: 0
   conditions: []
   actions:
-  - action: notify.mobile_app_public_phone_32fa2df23ba1e07e
+  - action: notify.mobile_app_public_phone_3841f601f4cd5ee0
     metadata: {}
     data:
-      message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
+      message: 'CO2 is high! Current level: {{ states(''sensor.masked_sensor_3512a0a0b0e9d440'')
         }} ppm'
       data:
         push:
@@ -60,21 +60,21 @@
   triggers:
   - trigger: state
     entity_id:
-    - binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+    - binary_sensor.masked_binary_sensor_8c9817e477106c66
     to: 'on'
     id: motion_trigger
   - trigger: state
     entity_id:
-    - light.bedroom_lights
+    - light.masked_light_1715946b112aa2a5
     from: 'off'
     to: 'on'
     id: manual_on
   conditions:
   - condition: state
-    entity_id: input_boolean.sleeping_mode
+    entity_id: input_boolean.masked_input_boolean_4e834451e5298faa
     state: 'off'
   - condition: state
-    entity_id: input_boolean.focus_mode
+    entity_id: input_boolean.masked_input_boolean_3452d03dd937a900
     state: 'off'
   actions:
   - choose:
@@ -82,29 +82,29 @@
       - condition: trigger
         id: motion_trigger
       - condition: state
-        entity_id: light.bedroom_lights
+        entity_id: light.masked_light_1715946b112aa2a5
         state: 'off'
       - condition: numeric_state
-        entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
+        entity_id: sensor.masked_sensor_b274670acc9de8ee
         below: 10
       sequence:
       - action: adaptive_lighting.apply
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
+          entity_id: switch.masked_switch_26c52e26b1212925
+          lights: light.masked_light_1715946b112aa2a5
           turn_on_lights: true
           transition: 1
     - conditions:
       - condition: trigger
         id: manual_on
       - condition: numeric_state
-        entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
+        entity_id: sensor.masked_sensor_b274670acc9de8ee
         below: 10
       sequence:
       - action: adaptive_lighting.apply
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
+          entity_id: switch.masked_switch_26c52e26b1212925
+          lights: light.masked_light_1715946b112aa2a5
           turn_on_lights: true
           transition: 1
   mode: restart
@@ -117,10 +117,10 @@
     to: 'on'
     id: activity_on
   - trigger: state
-    entity_id: media_player.sony_xr_65a95l_2
+    entity_id: media_player.masked_media_player_db03fde6a674dce0
     id: tv_changed
   - trigger: state
-    entity_id: switch.grillplats_plug
+    entity_id: switch.masked_switch_108f1accbc877f44
     id: plug_changed
   actions:
   - choose:
@@ -185,18 +185,18 @@
     entity_id: binary_sensor.bedroom_occupancy
     state: 'off'
   - condition: state
-    entity_id: media_player.sony_xr_65a95l_2
+    entity_id: media_player.masked_media_player_db03fde6a674dce0
     state: 'off'
   - condition: state
-    entity_id: input_boolean.focus_mode
+    entity_id: input_boolean.masked_input_boolean_3452d03dd937a900
     state: 'off'
   - condition: state
-    entity_id: switch.grillplats_plug
+    entity_id: switch.masked_switch_108f1accbc877f44
     state: 'off'
   actions:
   - action: light.turn_off
     target:
-      entity_id: light.bedroom_lights
+      entity_id: light.masked_light_1715946b112aa2a5
     data:
       transition: 5
   mode: restart
@@ -205,29 +205,29 @@
   description: Keeps restart behavior for motion retriggering while adjusting shutdown order to prevent light revival.
   triggers:
   - trigger: state
-    entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+    entity_id: binary_sensor.masked_binary_sensor_8c9817e477106c66
     to: 'on'
   conditions:
   - condition: state
-    entity_id: input_boolean.sleeping_mode
+    entity_id: input_boolean.masked_input_boolean_4e834451e5298faa
     state: 'on'
   - condition: state
-    entity_id: input_boolean.focus_mode
+    entity_id: input_boolean.masked_input_boolean_3452d03dd937a900
     state: 'off'
   - condition: state
-    entity_id: light.bedroom_lights
+    entity_id: light.masked_light_1715946b112aa2a5
     state: 'off'
   actions:
   - action: light.turn_on
     target:
-      entity_id: light.window_light
+      entity_id: light.masked_light_eebcfc9eb8d54535
     data:
       brightness_pct: 5
       color_temp_kelvin: 2500
       transition: 2
   - wait_for_trigger:
     - trigger: state
-      entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+      entity_id: binary_sensor.masked_binary_sensor_8c9817e477106c66
       to: 'off'
       for:
         seconds: 2
@@ -235,14 +235,14 @@
     continue_on_timeout: true
   - action: light.turn_off
     target:
-      entity_id: light.window_light
+      entity_id: light.masked_light_eebcfc9eb8d54535
     data:
       transition: 2
   - delay: 00:00:04
   - action: adaptive_lighting.apply
     data:
-      entity_id: switch.adaptive_lighting_adaptive_lighting
-      lights: light.window_light
+      entity_id: switch.masked_switch_26c52e26b1212925
+      lights: light.masked_light_eebcfc9eb8d54535
       turn_on_lights: false
   mode: restart
 - id: '1773032006764'
@@ -250,15 +250,15 @@
   description: Opening the door after 10:00 on weekdays or 11:00 on weekends counts as waking up.
   triggers:
   - trigger: state
-    entity_id: binary_sensor.myggbett_door_window_sensor_door
+    entity_id: binary_sensor.masked_binary_sensor_332fd811fe7514b2
     from: 'off'
     to: 'on'
   conditions:
   - condition: state
-    entity_id: input_boolean.sleeping_mode
+    entity_id: input_boolean.masked_input_boolean_4e834451e5298faa
     state: 'on'
   - condition: state
-    entity_id: input_boolean.focus_mode
+    entity_id: input_boolean.masked_input_boolean_3452d03dd937a900
     state: 'off'
   - condition: or
     conditions:
@@ -284,18 +284,18 @@
   actions:
   - action: input_boolean.turn_off
     target:
-      entity_id: input_boolean.sleeping_mode
+      entity_id: input_boolean.masked_input_boolean_4e834451e5298faa
   mode: single
 - id: '1773033168449'
   alias: "State Sync: Sleep Mode Lighting"
   description: Fixes the issue where the lights could stay on after sleep mode ends.
   triggers:
   - trigger: state
-    entity_id: input_boolean.sleeping_mode
+    entity_id: input_boolean.masked_input_boolean_4e834451e5298faa
     to: 'on'
     id: sleep_on
   - trigger: state
-    entity_id: input_boolean.sleeping_mode
+    entity_id: input_boolean.masked_input_boolean_4e834451e5298faa
     to: 'off'
     id: sleep_off
   actions:
@@ -306,16 +306,16 @@
       sequence:
       - action: switch.turn_off
         target:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
+          entity_id: switch.masked_switch_26c52e26b1212925
       - action: switch.turn_on
         target:
-          entity_id: switch.adaptive_lighting_sleep_mode_adaptive_lighting
+          entity_id: switch.masked_switch_80707cc2624daa54
       - repeat:
           count: 3
           sequence:
           - action: light.turn_on
             target:
-              entity_id: light.bedroom_lights
+              entity_id: light.masked_light_1715946b112aa2a5
             data:
               brightness_pct: 1
               color_temp_kelvin: 1800
@@ -323,7 +323,7 @@
           - delay: 00:00:01
           - action: light.turn_on
             target:
-              entity_id: light.bedroom_lights
+              entity_id: light.masked_light_1715946b112aa2a5
             data:
               brightness_pct: 15
               color_temp_kelvin: 2100
@@ -331,7 +331,7 @@
           - delay: 00:00:01
       - action: light.turn_off
         target:
-          entity_id: light.bedroom_lights
+          entity_id: light.masked_light_1715946b112aa2a5
         data:
           transition: 10
     - conditions:
@@ -340,21 +340,21 @@
       sequence:
       - action: switch.turn_off
         target:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
+          entity_id: switch.masked_switch_26c52e26b1212925
       - action: switch.turn_off
         target:
-          entity_id: switch.adaptive_lighting_sleep_mode_adaptive_lighting
+          entity_id: switch.masked_switch_80707cc2624daa54
       - delay: '00:00:00.500'
       - repeat:
           count: 3
           sequence:
           - action: light.turn_on
             target:
-              entity_id: light.bedroom_lights
+              entity_id: light.masked_light_1715946b112aa2a5
             data:
               brightness_pct: 15
-              rgb_color: '{% if is_state(''weather.forecast_home'', ''rainy'') %}
-                [0, 0, 255] {% elif is_state(''weather.forecast_home'', ''sunny'')
+              rgb_color: '{% if is_state(''weather.masked_weather_6ef4d55bd89f6a57'', ''rainy'') %}
+                [0, 0, 255] {% elif is_state(''weather.masked_weather_6ef4d55bd89f6a57'', ''sunny'')
                 %} [255, 200, 0] {% else %} [255, 255, 255] {% endif %}
 
                 '
@@ -362,15 +362,15 @@
           - delay: 00:00:01
           - action: light.turn_off
             target:
-              entity_id: light.bedroom_lights
+              entity_id: light.masked_light_1715946b112aa2a5
           - delay: 00:00:01
       - action: switch.turn_on
         target:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
+          entity_id: switch.masked_switch_26c52e26b1212925
       - action: adaptive_lighting.apply
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
+          entity_id: switch.masked_switch_26c52e26b1212925
+          lights: light.masked_light_1715946b112aa2a5
           transition: 5
           turn_on_lights: false
   mode: restart
@@ -379,33 +379,33 @@
   description: Switches to work lighting when focus mode turns on, then restores adaptive bedroom lighting when it turns off.
   triggers:
   - trigger: state
-    entity_id: input_boolean.focus_mode
+    entity_id: input_boolean.masked_input_boolean_3452d03dd937a900
   actions:
   - choose:
     - conditions:
       - condition: state
-        entity_id: input_boolean.focus_mode
+        entity_id: input_boolean.masked_input_boolean_3452d03dd937a900
         state: 'on'
       sequence:
       - action: light.turn_off
         target:
-          entity_id: light.bedroom_lights
+          entity_id: light.masked_light_1715946b112aa2a5
         data:
           transition: 2
       - action: light.turn_on
         target:
-          entity_id: light.desk_light
+          entity_id: light.masked_light_388c825b10687329
         data:
           brightness_pct: 80
           transition: 2
     - conditions:
       - condition: state
-        entity_id: input_boolean.focus_mode
+        entity_id: input_boolean.masked_input_boolean_3452d03dd937a900
         state: 'off'
       sequence:
       - action: light.turn_off
         target:
-          entity_id: light.desk_light
+          entity_id: light.masked_light_388c825b10687329
       - action: automation.trigger
         target:
           entity_id: automation.bedroom_adaptive_lighting_manager
@@ -413,7 +413,7 @@
           skip_condition: true
       - action: adaptive_lighting.apply
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
+          entity_id: switch.masked_switch_26c52e26b1212925
+          lights: light.masked_light_1715946b112aa2a5
           transition: 3
   mode: restart

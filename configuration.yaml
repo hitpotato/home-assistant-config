@@ -20,7 +20,7 @@ template:
         unique_id: bedroom_activity_signal
         device_class: occupancy
         state: >
-          {{ is_state('binary_sensor.myggspray_wrlss_mtn_sensor_occupancy', 'on') }}
+          {{ is_state('binary_sensor.masked_binary_sensor_8c9817e477106c66', 'on') }}
 
       # Public room-occupancy sensor kept stable for the existing automations.
       - name: "Bedroom Occupancy"
@@ -28,9 +28,9 @@ template:
         device_class: occupancy
         state: >
           {{ is_state('binary_sensor.bedroom_activity', 'on')
-             or states('media_player.sony_xr_65a95l_2') not in ['off', 'unavailable', 'idle']
-             or is_state('switch.grillplats_plug', 'on')
+             or states('media_player.masked_media_player_db03fde6a674dce0') not in ['off', 'unavailable', 'idle']
+             or is_state('switch.masked_switch_108f1accbc877f44', 'on')
              or (
-               is_state('binary_sensor.myggbett_door_window_sensor_door', 'off')
+               is_state('binary_sensor.masked_binary_sensor_332fd811fe7514b2', 'off')
                and is_state('timer.bedroom_occupancy_hold', 'active')
              ) }}
