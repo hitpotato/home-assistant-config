@@ -1,0 +1,11 @@
+# Python bytecode caches
+__pycache__/
+*.pyc
+
+# Local tool and planning files
+.serena/
+AGENTS.md
+PLAN.md
+
+# Local real Home Assistant config
+.local/

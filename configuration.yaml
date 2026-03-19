@@ -1,0 +1,36 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+timer:
+  bedroom_occupancy_hold:
+    duration: "00:40:00"
+
+template:
+  - binary_sensor:
+      # Immediate activity signal used for fast reactions such as auto-on logic.
+      - name: "Bedroom Activity"
+        unique_id: bedroom_activity_signal
+        device_class: occupancy
+        state: >
+          {{ is_state('binary_sensor.myggspray_wrlss_mtn_sensor_occupancy', 'on') }}
+
+      # Public room-occupancy sensor kept stable for the existing automations.
+      - name: "Bedroom Occupancy"
+        unique_id: bedroom_occupancy_logic_lock
+        device_class: occupancy
+        state: >
+          {{ is_state('binary_sensor.bedroom_activity', 'on')
+             or states('media_player.sony_xr_65a95l_2') not in ['off', 'unavailable', 'idle']
+             or is_state('switch.grillplats_plug', 'on')
+             or (
+               is_state('binary_sensor.myggbett_door_window_sensor_door', 'off')
+               and is_state('timer.bedroom_occupancy_hold', 'active')
+             ) }}

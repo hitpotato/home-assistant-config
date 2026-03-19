@@ -1,0 +1,419 @@
+- id: '1770454261000'
+  alias: PM2.5 alert
+  description: ''
+  triggers:
+  - type: pm25
+    device_id: masked_device_0ef520a795fcdd0e
+    entity_id: masked_entity_94965e2c3abc03e0
+    domain: sensor
+    trigger: device
+    above: 40
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 20
+  conditions: []
+  actions:
+  - action: notify.mobile_app_public_phone_32fa2df23ba1e07e
+    metadata: {}
+    data:
+      message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
+        }} µg/m³'
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 0.3
+  mode: single
+- id: '1770455525782'
+  alias: CO2 Alert
+  description: ''
+  triggers:
+  - type: carbon_dioxide
+    device_id: masked_device_0ef520a795fcdd0e
+    entity_id: masked_entity_e804aee5413d5c97
+    domain: sensor
+    trigger: device
+    above: 1000
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  conditions: []
+  actions:
+  - action: notify.mobile_app_public_phone_32fa2df23ba1e07e
+    metadata: {}
+    data:
+      message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
+        }} ppm'
+      data:
+        push:
+          sound:
+            name: default
+            critical: 1
+            volume: 0.3
+  mode: single
+- id: '1773020624303'
+  alias: "Bedroom: Adaptive Lighting Manager"
+  description: Adaptive Lighting fully controls brightness and color temperature, using apply for immediate sync.
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+    to: 'on'
+    id: motion_trigger
+  - trigger: state
+    entity_id:
+    - light.bedroom_lights
+    from: 'off'
+    to: 'on'
+    id: manual_on
+  conditions:
+  - condition: state
+    entity_id: input_boolean.sleeping_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.focus_mode
+    state: 'off'
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: motion_trigger
+      - condition: state
+        entity_id: light.bedroom_lights
+        state: 'off'
+      - condition: numeric_state
+        entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
+        below: 10
+      sequence:
+      - action: adaptive_lighting.apply
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          lights: light.bedroom_lights
+          turn_on_lights: true
+          transition: 1
+    - conditions:
+      - condition: trigger
+        id: manual_on
+      - condition: numeric_state
+        entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
+        below: 10
+      sequence:
+      - action: adaptive_lighting.apply
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          lights: light.bedroom_lights
+          turn_on_lights: true
+          transition: 1
+  mode: restart
+- id: '1774000000000'
+  alias: "Bedroom: Occupancy Hold Timer"
+  description: Uses an explicit timer to retain occupancy so activity detection and occupancy inference stay separate.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.bedroom_activity
+    to: 'on'
+    id: activity_on
+  - trigger: state
+    entity_id: media_player.sony_xr_65a95l_2
+    id: tv_changed
+  - trigger: state
+    entity_id: switch.grillplats_plug
+    id: plug_changed
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: activity_on
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.bedroom_occupancy_hold
+        data:
+          duration: '00:40:00'
+    - conditions:
+      - condition: trigger
+        id: tv_changed
+      # TV turning on or off both count as recent room activity, but idle/off churn does not.
+      - condition: template
+        value_template: >
+          {{ trigger.from_state is not none
+             and trigger.to_state is not none
+             and (
+               trigger.from_state.state not in ['off', 'idle', 'unavailable']
+               or trigger.to_state.state not in ['off', 'idle', 'unavailable']
+             ) }}
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.bedroom_occupancy_hold
+        data:
+          duration: '00:40:00'
+    - conditions:
+      - condition: trigger
+        id: plug_changed
+      # Plug turning on or off both mean someone interacted with it in the room.
+      - condition: template
+        value_template: >
+          {{ trigger.from_state is not none
+             and trigger.to_state is not none
+             and (
+               trigger.from_state.state == 'on'
+               or trigger.to_state.state == 'on'
+             ) }}
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.bedroom_occupancy_hold
+        data:
+          duration: '00:40:00'
+  mode: restart
+- id: '1773026091419'
+  alias: "Bedroom: Safe Auto-Off When Vacant"
+  description: Turns off the lights after 1 minute of vacancy when the TV and monitored plug are also off.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.bedroom_occupancy
+    from: 'on'
+    to: 'off'
+    for:
+      minutes: 1
+  conditions:
+  - condition: state
+    entity_id: binary_sensor.bedroom_occupancy
+    state: 'off'
+  - condition: state
+    entity_id: media_player.sony_xr_65a95l_2
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.focus_mode
+    state: 'off'
+  - condition: state
+    entity_id: switch.grillplats_plug
+    state: 'off'
+  actions:
+  - action: light.turn_off
+    target:
+      entity_id: light.bedroom_lights
+    data:
+      transition: 5
+  mode: restart
+- id: '1773030487845'
+  alias: "Bedroom: Late-Night Dim Light Mode"
+  description: Keeps restart behavior for motion retriggering while adjusting shutdown order to prevent light revival.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.sleeping_mode
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.focus_mode
+    state: 'off'
+  - condition: state
+    entity_id: light.bedroom_lights
+    state: 'off'
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.window_light
+    data:
+      brightness_pct: 5
+      color_temp_kelvin: 2500
+      transition: 2
+  - wait_for_trigger:
+    - trigger: state
+      entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+      to: 'off'
+      for:
+        seconds: 2
+    timeout: 00:00:50
+    continue_on_timeout: true
+  - action: light.turn_off
+    target:
+      entity_id: light.window_light
+    data:
+      transition: 2
+  - delay: 00:00:04
+  - action: adaptive_lighting.apply
+    data:
+      entity_id: switch.adaptive_lighting_adaptive_lighting
+      lights: light.window_light
+      turn_on_lights: false
+  mode: restart
+- id: '1773032006764'
+  alias: "Bedroom: Wake-Up Turns Off Sleep Mode"
+  description: Opening the door after 10:00 on weekdays or 11:00 on weekends counts as waking up.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.myggbett_door_window_sensor_door
+    from: 'off'
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.sleeping_mode
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.focus_mode
+    state: 'off'
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: time
+        after: '10:00:00'
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+    - condition: and
+      conditions:
+      - condition: time
+        after: '11:00:00'
+      - condition: time
+        weekday:
+        - sat
+        - sun
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.sleeping_mode
+  mode: single
+- id: '1773033168449'
+  alias: "State Sync: Sleep Mode Lighting"
+  description: Fixes the issue where the lights could stay on after sleep mode ends.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.sleeping_mode
+    to: 'on'
+    id: sleep_on
+  - trigger: state
+    entity_id: input_boolean.sleeping_mode
+    to: 'off'
+    id: sleep_off
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_on
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+      - action: switch.turn_on
+        target:
+          entity_id: switch.adaptive_lighting_sleep_mode_adaptive_lighting
+      - repeat:
+          count: 3
+          sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.bedroom_lights
+            data:
+              brightness_pct: 1
+              color_temp_kelvin: 1800
+              transition: 1
+          - delay: 00:00:01
+          - action: light.turn_on
+            target:
+              entity_id: light.bedroom_lights
+            data:
+              brightness_pct: 15
+              color_temp_kelvin: 2100
+              transition: 1
+          - delay: 00:00:01
+      - action: light.turn_off
+        target:
+          entity_id: light.bedroom_lights
+        data:
+          transition: 10
+    - conditions:
+      - condition: trigger
+        id: sleep_off
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+      - action: switch.turn_off
+        target:
+          entity_id: switch.adaptive_lighting_sleep_mode_adaptive_lighting
+      - delay: '00:00:00.500'
+      - repeat:
+          count: 3
+          sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.bedroom_lights
+            data:
+              brightness_pct: 15
+              rgb_color: '{% if is_state(''weather.forecast_home'', ''rainy'') %}
+                [0, 0, 255] {% elif is_state(''weather.forecast_home'', ''sunny'')
+                %} [255, 200, 0] {% else %} [255, 255, 255] {% endif %}
+
+                '
+              transition: 0.5
+          - delay: 00:00:01
+          - action: light.turn_off
+            target:
+              entity_id: light.bedroom_lights
+          - delay: 00:00:01
+      - action: switch.turn_on
+        target:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+      - action: adaptive_lighting.apply
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          lights: light.bedroom_lights
+          transition: 5
+          turn_on_lights: false
+  mode: restart
+- id: '1773271583160'
+  alias: "Bedroom: Focus Mode Sync"
+  description: Switches to work lighting when focus mode turns on, then restores adaptive bedroom lighting when it turns off.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.focus_mode
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.focus_mode
+        state: 'on'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.bedroom_lights
+        data:
+          transition: 2
+      - action: light.turn_on
+        target:
+          entity_id: light.desk_light
+        data:
+          brightness_pct: 80
+          transition: 2
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.focus_mode
+        state: 'off'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.desk_light
+      - action: automation.trigger
+        target:
+          entity_id: automation.bedroom_adaptive_lighting_manager
+        data:
+          skip_condition: true
+      - action: adaptive_lighting.apply
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          lights: light.bedroom_lights
+          transition: 3
+  mode: restart

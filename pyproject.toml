@@ -1,0 +1,20 @@
+[project]
+name = "home-assistant-config-tests"
+version = "0.1.0"
+description = "Pytest scenarios for the Home Assistant bedroom config"
+requires-python = ">=3.14"
+
+[dependency-groups]
+dev = [
+  # PyYAML is used to read the real repo YAML files inside the test fixtures.
+  "PyYAML>=6.0,<7.0",
+  # This package exposes the Home Assistant pytest fixtures/helpers that are
+  # commonly used for local HA-style testing outside the core repo.
+  # Keep a version range here and let uv.lock pin the exact resolved version.
+  "pytest-homeassistant-custom-component>=0.13,<0.14",
+]
+
+[tool.pytest.ini_options]
+# Allow async tests without adding @pytest.mark.asyncio on every test function.
+asyncio_mode = "auto"
+testpaths = ["tests"]
