@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_0ef520a795fcdd0e
-    entity_id: masked_entity_94965e2c3abc03e0
+    device_id: masked_device_656ea364bf82eb74
+    entity_id: masked_entity_21975114d657f37b
     domain: sensor
     trigger: device
     above: 40
@@ -12,9 +12,12 @@
       hours: 0
       minutes: 0
       seconds: 20
-  conditions: []
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_32fa2df23ba1e07e
+  - action: notify.mobile_app_public_phone_d56f8a9e710e4e6f
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -31,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_0ef520a795fcdd0e
-    entity_id: masked_entity_e804aee5413d5c97
+    device_id: masked_device_656ea364bf82eb74
+    entity_id: masked_entity_79db7c4cea0f202e
     domain: sensor
     trigger: device
     above: 1000
@@ -40,9 +43,12 @@
       hours: 0
       minutes: 1
       seconds: 0
-  conditions: []
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_32fa2df23ba1e07e
+  - action: notify.mobile_app_public_phone_d56f8a9e710e4e6f
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -70,6 +76,9 @@
     to: 'on'
     id: manual_on
   conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   - condition: state
     entity_id: input_boolean.sleeping_mode
     state: 'off'
@@ -122,6 +131,10 @@
   - trigger: state
     entity_id: switch.grillplats_plug
     id: plug_changed
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   actions:
   - choose:
     - conditions:
@@ -182,6 +195,9 @@
       minutes: 1
   conditions:
   - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
+  - condition: state
     entity_id: binary_sensor.bedroom_occupancy
     state: 'off'
   - condition: state
@@ -208,6 +224,9 @@
     entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
     to: 'on'
   conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   - condition: state
     entity_id: input_boolean.sleeping_mode
     state: 'on'
@@ -255,6 +274,9 @@
     to: 'on'
   conditions:
   - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
+  - condition: state
     entity_id: input_boolean.sleeping_mode
     state: 'on'
   - condition: state
@@ -298,6 +320,10 @@
     entity_id: input_boolean.sleeping_mode
     to: 'off'
     id: sleep_off
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   actions:
   - choose:
     - conditions:
@@ -380,6 +406,10 @@
   triggers:
   - trigger: state
     entity_id: input_boolean.focus_mode
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   actions:
   - choose:
     - conditions:

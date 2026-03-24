@@ -9,6 +9,10 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
+input_boolean:
+  automations_enabled:
+    name: Automations Enabled
+
 timer:
   bedroom_occupancy_hold:
     duration: "00:40:00"
