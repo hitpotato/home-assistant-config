@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_656ea364bf82eb74
-    entity_id: masked_entity_21975114d657f37b
+    device_id: masked_device_e04285b0e56150bb
+    entity_id: masked_entity_b956e729de263fe3
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_d56f8a9e710e4e6f
+  - action: notify.mobile_app_public_phone_ba17b3d13d866c42
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_656ea364bf82eb74
-    entity_id: masked_entity_79db7c4cea0f202e
+    device_id: masked_device_e04285b0e56150bb
+    entity_id: masked_entity_7427b72ecfcfac0b
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_d56f8a9e710e4e6f
+  - action: notify.mobile_app_public_phone_ba17b3d13d866c42
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -131,6 +131,11 @@
   - trigger: state
     entity_id: switch.grillplats_plug
     id: plug_changed
+  - trigger: state
+    entity_id: input_boolean.automations_enabled
+    from: 'off'
+    to: 'on'
+    id: automations_reenabled
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
@@ -176,6 +181,18 @@
                trigger.from_state.state == 'on'
                or trigger.to_state.state == 'on'
              ) }}
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.bedroom_occupancy_hold
+        data:
+          duration: '00:40:00'
+    - conditions:
+      - condition: trigger
+        id: automations_reenabled
+      - condition: state
+        entity_id: light.bedroom_lights
+        state: 'on'
       sequence:
       - action: timer.start
         target:

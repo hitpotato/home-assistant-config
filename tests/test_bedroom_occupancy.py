@@ -84,3 +84,51 @@ async def test_closed_door_and_active_hold_timer_keep_bedroom_occupied(
     assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
     assert hass.states.get("binary_sensor.bedroom_activity").state == "off"
     assert hass.states.get("binary_sensor.bedroom_occupancy").state == "on"
+
+
+async def test_reenabling_automations_with_light_on_restarts_hold_timer(
+    hass,
+    bedroom_timer_config,
+    bedroom_hold_timer_automation_config,
+) -> None:
+    """Restart the hold timer when automations come back while the bedroom light is already on."""
+
+    assert await async_setup_component(hass, "timer", bedroom_timer_config)
+    assert await async_setup_component(
+        hass, "automation", bedroom_hold_timer_automation_config
+    )
+    await hass.async_block_till_done()
+
+    hass.states.async_set("input_boolean.automations_enabled", "off")
+    hass.states.async_set("light.bedroom_lights", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("timer.bedroom_occupancy_hold").state == "idle"
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
+
+
+async def test_reenabling_automations_with_light_off_keeps_hold_timer_idle(
+    hass,
+    bedroom_timer_config,
+    bedroom_hold_timer_automation_config,
+) -> None:
+    """Do not restart the hold timer when automations come back and the room light is off."""
+
+    assert await async_setup_component(hass, "timer", bedroom_timer_config)
+    assert await async_setup_component(
+        hass, "automation", bedroom_hold_timer_automation_config
+    )
+    await hass.async_block_till_done()
+
+    hass.states.async_set("input_boolean.automations_enabled", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("timer.bedroom_occupancy_hold").state == "idle"

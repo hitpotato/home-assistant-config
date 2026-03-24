@@ -93,6 +93,15 @@ def bedroom_auto_on_config(automations_yaml: list[dict[str, Any]]) -> dict[str, 
 
 
 @pytest.fixture
+def bedroom_hold_timer_automation_config(
+    automations_yaml: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Extract the tracked occupancy-hold automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1774000000000")
+    return {"automation": [automation]}
+
+
+@pytest.fixture
 def adaptive_lighting_calls(hass: HomeAssistant) -> list[ServiceCall]:
     """Capture calls to adaptive_lighting.apply during a test."""
     calls: list[ServiceCall] = []
