@@ -49,7 +49,12 @@ This split helps avoid false light-off behavior while still allowing fast light-
 
 - The repo root `configuration.yaml` and `automations.yaml` are the tracked public-safe copies.
 - The real local Home Assistant files live under `.local/real/` and are ignored by git.
+- Before editing `.local/real/configuration.yaml` or `.local/real/automations.yaml`,
+  run `uv run python scripts/backup_real_yaml.py` to snapshot them into
+  `.local/backups/<timestamp>/`.
 - Run `uv run python scripts/sanitize_yaml.py` to refresh the tracked public-safe root files from the ignored local real files.
+- After sanitizing, review the tracked changes with `git diff -- configuration.yaml automations.yaml`
+  and then run `uv run pytest`.
 - The same real ID is mapped to the same fake ID across both YAML files within one sanitize run.
 
 ## Test Setup
