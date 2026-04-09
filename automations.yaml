@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_e04285b0e56150bb
-    entity_id: masked_entity_b956e729de263fe3
+    device_id: masked_device_f869ecc3bc9da184
+    entity_id: masked_entity_679cd7484728f7c3
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_ba17b3d13d866c42
+  - action: notify.mobile_app_public_phone_0e55bf9c9a622ba1
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_e04285b0e56150bb
-    entity_id: masked_entity_7427b72ecfcfac0b
+    device_id: masked_device_f869ecc3bc9da184
+    entity_id: masked_entity_fe6758335363ab2f
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_ba17b3d13d866c42
+  - action: notify.mobile_app_public_phone_0e55bf9c9a622ba1
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -78,6 +78,9 @@
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
+    state: 'on'
+  - condition: state
+    entity_id: switch.adaptive_lighting_adaptive_lighting
     state: 'on'
   - condition: state
     entity_id: input_boolean.sleeping_mode
@@ -116,6 +119,52 @@
           lights: light.bedroom_lights
           turn_on_lights: true
           transition: 1
+  mode: restart
+- id: '1775000000001'
+  alias: "Bedroom: Adaptive Lighting Manual Opt-Out Bridge"
+  description: Turns the main Adaptive Lighting switch off when bedroom lights enter manual control in normal mode.
+  triggers:
+  - trigger: event
+    event_type: adaptive_lighting.manual_control
+  conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.switch == 'switch.adaptive_lighting_adaptive_lighting' }}"
+  - condition: state
+    entity_id: input_boolean.sleeping_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.focus_mode
+    state: 'off'
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.adaptive_lighting_adaptive_lighting
+  mode: restart
+- id: '1775000000002'
+  alias: "Bedroom: Adaptive Lighting Immediate Resume"
+  description: Clears manual control and reapplies bedroom Adaptive Lighting when the main switch is turned back on.
+  triggers:
+  - trigger: state
+    entity_id: switch.adaptive_lighting_adaptive_lighting
+    from: 'off'
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.sleeping_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.focus_mode
+    state: 'off'
+  actions:
+  - action: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.adaptive_lighting_adaptive_lighting
+      manual_control: false
+  - action: adaptive_lighting.apply
+    data:
+      entity_id: switch.adaptive_lighting_adaptive_lighting
+      lights: light.bedroom_lights
+      turn_on_lights: false
   mode: restart
 - id: '1774000000000'
   alias: "Bedroom: Occupancy Hold Timer"
