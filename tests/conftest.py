@@ -93,6 +93,24 @@ def bedroom_auto_on_config(automations_yaml: list[dict[str, Any]]) -> dict[str, 
 
 
 @pytest.fixture
+def adaptive_lighting_manual_opt_out_config(
+    automations_yaml: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Extract the tracked manual opt-out bridge automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1775000000001")
+    return {"automation": [automation]}
+
+
+@pytest.fixture
+def adaptive_lighting_resume_bridge_config(
+    automations_yaml: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Extract the tracked immediate-resume bridge automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1775000000002")
+    return {"automation": [automation]}
+
+
+@pytest.fixture
 def bedroom_hold_timer_automation_config(
     automations_yaml: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -112,4 +130,51 @@ def adaptive_lighting_calls(hass: HomeAssistant) -> list[ServiceCall]:
     # Register a fake service so the real Adaptive Lighting integration is not
     # required for these tests.
     hass.services.async_register("adaptive_lighting", "apply", handle_service)
+    return calls
+
+
+@pytest.fixture
+def adaptive_lighting_set_manual_control_calls(
+    hass: HomeAssistant,
+) -> list[ServiceCall]:
+    """Capture calls to adaptive_lighting.set_manual_control during a test."""
+    calls: list[ServiceCall] = []
+
+    async def handle_service(call: ServiceCall) -> None:
+        calls.append(call)
+
+    hass.services.async_register(
+        "adaptive_lighting",
+        "set_manual_control",
+        handle_service,
+    )
+    return calls
+
+
+@pytest.fixture
+def switch_service_calls(hass: HomeAssistant) -> list[ServiceCall]:
+    """Register fake switch services that also update the entity state."""
+    calls: list[ServiceCall] = []
+
+    def set_entities_state(entity_id: str | list[str] | None, state: str) -> None:
+        """Mirror HA target handling: entity_id may be one id or a list of ids."""
+        if entity_id is None:
+            return
+        if isinstance(entity_id, str):
+            hass.states.async_set(entity_id, state)
+            return
+
+        for one_entity_id in entity_id:
+            hass.states.async_set(one_entity_id, state)
+
+    async def handle_turn_on(call: ServiceCall) -> None:
+        calls.append(call)
+        set_entities_state(call.data.get("entity_id"), "on")
+
+    async def handle_turn_off(call: ServiceCall) -> None:
+        calls.append(call)
+        set_entities_state(call.data.get("entity_id"), "off")
+
+    hass.services.async_register("switch", "turn_on", handle_turn_on)
+    hass.services.async_register("switch", "turn_off", handle_turn_off)
     return calls
