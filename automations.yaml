@@ -127,6 +127,9 @@
   - trigger: event
     event_type: adaptive_lighting.manual_control
   conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   - condition: template
     value_template: "{{ trigger.event.data.switch == 'switch.adaptive_lighting_adaptive_lighting' }}"
   - condition: state
@@ -149,6 +152,9 @@
     from: 'off'
     to: 'on'
   conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   - condition: state
     entity_id: input_boolean.sleeping_mode
     state: 'off'

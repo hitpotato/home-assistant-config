@@ -1,0 +1,81 @@
+name: YAML Parity
+
+on:
+  pull_request:
+    paths:
+      - configuration.yaml
+      - automations.yaml
+      - scripts/sanitize_yaml.py
+      - scripts/check_yaml_parity.py
+      - .github/workflows/yaml-parity.yml
+
+jobs:
+  yaml-parity:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      PRIVATE_REPO_OWNER: ${{ vars.PRIVATE_YAML_REPO_OWNER }}
+      PRIVATE_REPO_NAME: ${{ vars.PRIVATE_YAML_REPO_NAME }}
+      PRIVATE_REPO: ${{ vars.PRIVATE_YAML_REPO_OWNER }}/${{ vars.PRIVATE_YAML_REPO_NAME }}
+      PRIVATE_BRANCH: ${{ github.head_ref }}
+    steps:
+      - name: Check out public repo
+        uses: actions/checkout@v4
+
+      - name: Validate private repo configuration
+        run: |
+          if [ -z "$PRIVATE_REPO_OWNER" ] || [ -z "$PRIVATE_REPO_NAME" ]; then
+            echo "::error::Missing PRIVATE_YAML_REPO_OWNER or PRIVATE_YAML_REPO_NAME repository variable."
+            exit 1
+          fi
+
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PRIVATE_YAML_APP_ID }}
+          private-key: ${{ secrets.PRIVATE_YAML_APP_PRIVATE_KEY }}
+          owner: ${{ vars.PRIVATE_YAML_REPO_OWNER }}
+          repositories: ${{ vars.PRIVATE_YAML_REPO_NAME }}
+
+      - name: Verify private repo access
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if ! curl -fsS \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$PRIVATE_REPO" > /dev/null; then
+            echo "::error::The parity check could not access the private YAML repo. This is a workflow/auth problem, not a content mismatch. Check GitHub App installation and repository permissions."
+            exit 1
+          fi
+
+      - name: Verify matching private branch exists
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if ! curl -fsS \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$PRIVATE_REPO/branches/$PRIVATE_BRANCH" > /dev/null; then
+            echo "::error::Matching private branch $PRIVATE_BRANCH was not found. Run \`uv run python scripts/yaml_flow.py start\` locally, then push the private branch."
+            exit 1
+          fi
+
+      - name: Check out private repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PRIVATE_REPO }}
+          ref: ${{ env.PRIVATE_BRANCH }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: private-repo
+          persist-credentials: false
+
+      - name: Check YAML parity
+        run: |
+          python scripts/check_yaml_parity.py \
+            --public-repo . \
+            --private-repo private-repo

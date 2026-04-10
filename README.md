@@ -57,6 +57,60 @@ This split helps avoid false light-off behavior while still allowing fast light-
   and then run `uv run pytest`.
 - The same real ID is mapped to the same fake ID across both YAML files within one sanitize run.
 
+## Private Repo YAML Workflow
+
+This repo now also has a helper flow for a paired private YAML repo:
+
+- The private repo is expected at the sibling path `../home-assistant-config-private` by default.
+- You can override that location with `HA_PRIVATE_YAML_REPO=/path/to/private-repo`.
+- The private repo is expected to track the real root `configuration.yaml` and `automations.yaml`.
+
+Use the workflow helper like this:
+
+```bash
+uv run python scripts/yaml_flow.py start
+uv run python scripts/yaml_flow.py refresh
+```
+
+- `start`
+  - reads the current public branch name
+  - switches or creates the matching private branch
+  - creates a new private branch from private `origin/main` if needed
+  - refreshes the tracked public-safe YAML from the private repo
+
+- `refresh`
+  - reads the current private working tree, including uncommitted YAML edits
+  - rewrites the tracked public-safe YAML in this repo
+  - refuses to run if tracked public `configuration.yaml` or `automations.yaml` already have local edits
+
+This keeps the private repo as the source of truth for real YAML while the public repo stays safe for tests and review.
+
+## YAML Parity CI
+
+The repo also includes a parity workflow at `.github/workflows/yaml-parity.yml`.
+
+- It only runs for trusted same-repo pull requests.
+- It checks that the matching private branch exists.
+- It sanitizes the private repo YAML and compares it against the tracked public YAML.
+- The comparison canonicalizes random mask values first, so CI stays stable without making public masks stable across history.
+
+Repository configuration needed for that workflow:
+
+- repository variables
+  - `PRIVATE_YAML_REPO_OWNER`
+  - `PRIVATE_YAML_REPO_NAME`
+- repository secrets
+  - `PRIVATE_YAML_APP_ID`
+  - `PRIVATE_YAML_APP_PRIVATE_KEY`
+
+If parity fails because the public mirror is stale, run:
+
+```bash
+uv run python scripts/yaml_flow.py refresh
+```
+
+Then commit the updated public YAML and push again.
+
 ## Test Setup
 
 The repo uses:
