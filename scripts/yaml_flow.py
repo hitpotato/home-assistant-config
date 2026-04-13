@@ -11,7 +11,7 @@ from sanitize_yaml import sanitize_yaml_pair
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_CONFIGURATION = REPO_ROOT / "configuration.yaml"
 PUBLIC_AUTOMATIONS = REPO_ROOT / "automations.yaml"
-DEFAULT_PRIVATE_REPO = REPO_ROOT.parent / "home-assistant-config-private"
+DEFAULT_PRIVATE_REPO = REPO_ROOT / ".local" / "real"
 PRIVATE_MAIN_BRANCH = "main"
 PRIVATE_CONFIGURATION = "configuration.yaml"
 PRIVATE_AUTOMATIONS = "automations.yaml"
@@ -26,6 +26,11 @@ def run_git(repo_path: Path, *args: str) -> str:
         capture_output=True,
     )
     return result.stdout.strip()
+
+
+def git_toplevel(repo_path: Path) -> Path:
+    """Return the resolved working-tree root for one git repo path."""
+    return Path(run_git(repo_path, "rev-parse", "--show-toplevel")).resolve()
 
 
 def resolve_private_repo_path() -> Path:
@@ -43,17 +48,24 @@ def current_public_branch() -> str:
 
 
 def ensure_repo_exists(repo_path: Path) -> None:
-    """Fail early if the target repo path is missing or not a git repo."""
+    """Fail early if the target repo path is missing or not a separate git repo."""
     if not repo_path.exists():
         raise SystemExit(
             f"Private repo not found: {repo_path}\n"
-            "Set HA_PRIVATE_YAML_REPO or create the sibling private repo."
+            "Set HA_PRIVATE_YAML_REPO or clone the private repo into .local/real."
         )
 
     try:
-        run_git(repo_path, "rev-parse", "--git-dir")
+        private_git_root = git_toplevel(repo_path)
     except subprocess.CalledProcessError as error:
         raise SystemExit(f"Path is not a git repo: {repo_path}") from error
+
+    public_git_root = git_toplevel(REPO_ROOT)
+    if private_git_root == public_git_root:
+        raise SystemExit(
+            f"Private repo path points at the public repo working tree: {repo_path}\n"
+            "Make .local/real its own private git clone or set HA_PRIVATE_YAML_REPO to a separate private repo."
+        )
 
 
 def public_yaml_is_dirty() -> bool:
@@ -84,7 +96,7 @@ def changed_public_yaml_paths() -> list[Path]:
     for line in status.splitlines():
         if not line:
             continue
-        changed_paths.append(REPO_ROOT / line[3:])
+        changed_paths.append(REPO_ROOT / line.split(maxsplit=1)[1])
 
     return changed_paths
 

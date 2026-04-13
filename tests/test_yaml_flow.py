@@ -109,6 +109,24 @@ def test_resolve_private_repo_path_prefers_env_override(
     assert yaml_flow.resolve_private_repo_path() == private_repo
 
 
+def test_refresh_rejects_private_repo_path_inside_public_repo(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Refresh should fail if the private path is still nested in the public repo."""
+    public_repo = tmp_path / "public"
+    nested_private_path = public_repo / ".local" / "real"
+
+    init_repo(public_repo)
+    write_public_yaml(public_repo, "config: public\n", "automation: public\n")
+    commit_all(public_repo, "init public")
+    nested_private_path.mkdir(parents=True, exist_ok=True)
+    patch_repo_paths(monkeypatch, public_repo=public_repo, private_repo=nested_private_path)
+
+    with pytest.raises(SystemExit, match="own private git clone"):
+        yaml_flow.refresh()
+
+
 def test_refresh_refuses_to_overwrite_dirty_public_yaml(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -181,6 +199,8 @@ def test_refresh_uses_private_working_tree_state(
     assert "notify.mobile_app_longchen_iphone" not in configuration_text
     assert "Private repo state: dirty" in output
     assert "Changed public YAML:" in output
+    assert "- configuration.yaml" in output
+    assert "- automations.yaml" in output
 
 
 def test_start_creates_private_branch_from_origin_main_and_refreshes_public_yaml(

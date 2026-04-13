@@ -48,7 +48,8 @@ This split helps avoid false light-off behavior while still allowing fast light-
 ## Public And Local Config Workflow
 
 - The repo root `configuration.yaml` and `automations.yaml` are the tracked public-safe copies.
-- The real local Home Assistant files live under `.local/real/` and are ignored by git.
+- The real local Home Assistant files live under `.local/real/`.
+- The public repo ignores `.local/`, and `.local/real/` should be its own private Git clone.
 - Before editing `.local/real/configuration.yaml` or `.local/real/automations.yaml`,
   run `uv run python scripts/backup_real_yaml.py` to snapshot them into
   `.local/backups/<timestamp>/`.
@@ -61,9 +62,10 @@ This split helps avoid false light-off behavior while still allowing fast light-
 
 This repo now also has a helper flow for a paired private YAML repo:
 
-- The private repo is expected at the sibling path `../home-assistant-config-private` by default.
+- The private repo is expected at `.local/real/` by default.
 - You can override that location with `HA_PRIVATE_YAML_REPO=/path/to/private-repo`.
 - The private repo is expected to track the real root `configuration.yaml` and `automations.yaml`.
+- `scripts/yaml_flow.py` expects that path to be a separate Git repo, not just a normal folder inside this public repo.
 
 Use the workflow helper like this:
 
