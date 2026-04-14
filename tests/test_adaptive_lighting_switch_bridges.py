@@ -16,6 +16,7 @@ async def test_manual_control_event_turns_off_main_adaptive_lighting_switch(
         adaptive_lighting_manual_opt_out_config,
     )
 
+    hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
@@ -48,6 +49,7 @@ async def test_manual_control_event_from_other_switch_is_ignored(
         adaptive_lighting_manual_opt_out_config,
     )
 
+    hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
@@ -79,6 +81,7 @@ async def test_turning_main_switch_on_clears_manual_control_and_reapplies_al(
         adaptive_lighting_resume_bridge_config,
     )
 
+    hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("light.bedroom_lights", "off")
@@ -116,6 +119,7 @@ async def test_turning_main_switch_on_during_sleep_does_not_reapply_al(
         adaptive_lighting_resume_bridge_config,
     )
 
+    hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "on")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
@@ -142,6 +146,7 @@ async def test_turning_main_switch_on_during_focus_does_not_reapply_al(
         adaptive_lighting_resume_bridge_config,
     )
 
+    hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "on")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")

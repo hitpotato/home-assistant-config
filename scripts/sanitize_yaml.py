@@ -73,35 +73,57 @@ def sanitize_file(
     target_path.write_text(sanitized_text, encoding="utf-8")
 
 
-def ensure_real_files_exist() -> None:
-    """Fail early if the ignored local source files are missing."""
+def ensure_files_exist(paths: tuple[Path, ...], *, hint: str) -> None:
+    """Fail early if required YAML files are missing."""
     missing_files = []
 
-    for path in (REAL_DIR / "configuration.yaml", REAL_DIR / "automations.yaml"):
+    for path in paths:
         if not path.exists():
             missing_files.append(path)
 
     if missing_files:
         missing_list = "\n".join(f"- {path}" for path in missing_files)
         raise SystemExit(
-            "Missing local real YAML file(s):\n"
-            f"{missing_list}\n\n"
-            "Create them first under .local/real/ before running the sanitizer."
+            f"Missing YAML file(s):\n{missing_list}\n\n{hint}"
         )
 
 
-def main() -> None:
-    """Refresh the tracked public-safe YAML files from .local/real/."""
-    ensure_real_files_exist()
-
-    mapping = {
+def new_mapping() -> dict[str, dict[str, str]]:
+    """Create one fresh per-run mask table shared across both YAML files."""
+    return {
         "device_id": {},
         "entity_id": {},
         "notify_target": {},
     }
 
-    sanitize_file(REAL_DIR / "configuration.yaml", ROOT_CONFIGURATION, mapping)
-    sanitize_file(REAL_DIR / "automations.yaml", ROOT_AUTOMATIONS, mapping)
+
+def sanitize_yaml_pair(
+    *,
+    configuration_source: Path,
+    automations_source: Path,
+    configuration_target: Path,
+    automations_target: Path,
+) -> None:
+    """Sanitize one configuration/automations pair into the public-safe targets."""
+    ensure_files_exist(
+        (configuration_source, automations_source),
+        hint="Create the source YAML files first before running the sanitizer.",
+    )
+
+    mapping = new_mapping()
+
+    sanitize_file(configuration_source, configuration_target, mapping)
+    sanitize_file(automations_source, automations_target, mapping)
+
+
+def main() -> None:
+    """Refresh the tracked public-safe YAML files from .local/real/."""
+    sanitize_yaml_pair(
+        configuration_source=REAL_DIR / "configuration.yaml",
+        automations_source=REAL_DIR / "automations.yaml",
+        configuration_target=ROOT_CONFIGURATION,
+        automations_target=ROOT_AUTOMATIONS,
+    )
 
     print("Sanitized configuration.yaml and automations.yaml from .local/real/")
 
