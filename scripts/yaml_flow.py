@@ -286,6 +286,17 @@ def ensure_pr(repo_path: Path, repo_label: str, branch_name: str) -> tuple[str, 
     return created_url.splitlines()[-1], False
 
 
+def branch_has_commits_over_main(repo_path: Path, branch_name: str) -> bool:
+    """Return True when one branch is ahead of origin/main."""
+    ahead_count = run_git(
+        repo_path,
+        "rev-list",
+        "--count",
+        f"origin/{MAIN_BRANCH}..{branch_name}",
+    )
+    return ahead_count != "0"
+
+
 def start() -> None:
     """Create or switch the matching private branch."""
     private_repo = resolve_private_repo_path()
@@ -343,17 +354,29 @@ def open_prs() -> None:
             "Commit or stash them before running yaml_flow open-prs."
         )
 
+    if not branch_has_commits_over_main(REPO_ROOT, public_branch):
+        raise SystemExit(
+            f"Public branch {public_branch} has no commits ahead of origin/{MAIN_BRANCH}.\n"
+            "There is nothing to open a public pull request for."
+        )
+
+    private_has_diff = branch_has_commits_over_main(private_repo, private_branch)
+
     print(f"Public repo: {REPO_ROOT}")
     print(f"Private repo: {private_repo}")
     print(f"Branch: {public_branch}")
 
-    print("Pushing private branch...")
-    push_branch(private_repo, "private", private_branch)
-    print("Private branch pushed.")
+    if private_has_diff:
+        print("Pushing private branch...")
+        push_branch(private_repo, "private", private_branch)
+        print("Private branch pushed.")
 
-    print("Ensuring private pull request...")
-    private_pr_url, private_reused = ensure_pr(private_repo, "private", private_branch)
-    print(f"Private PR {'reused' if private_reused else 'created'}: {private_pr_url}")
+        print("Ensuring private pull request...")
+        private_pr_url, private_reused = ensure_pr(private_repo, "private", private_branch)
+        print(f"Private PR {'reused' if private_reused else 'created'}: {private_pr_url}")
+    else:
+        print(f"Private branch {private_branch} has no commits ahead of origin/{MAIN_BRANCH}.")
+        print("Skipping private push and private pull request.")
 
     print("Pushing public branch...")
     push_branch(REPO_ROOT, "public", public_branch)
@@ -363,7 +386,10 @@ def open_prs() -> None:
     public_pr_url, public_reused = ensure_pr(REPO_ROOT, "public", public_branch)
     print(f"Public PR {'reused' if public_reused else 'created'}: {public_pr_url}")
 
-    print("Both pull requests are ready.")
+    if private_has_diff:
+        print("Both pull requests are ready.")
+    else:
+        print("Public pull request is ready. No private pull request was needed for this branch.")
 
 
 def parse_args() -> argparse.Namespace:
