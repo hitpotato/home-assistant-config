@@ -44,7 +44,8 @@ jobs:
 
       - name: Skip parity for unrelated PRs
         if: ${{ steps.parity-scope.outputs.needs_parity != 'true' }}
-        run: echo "Skipping YAML parity: this PR does not touch mirrored YAML or parity tooling."
+        run: |
+          echo "Skipping YAML parity: this PR does not touch mirrored YAML or parity tooling."
 
       - name: Validate private repo configuration
         if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
