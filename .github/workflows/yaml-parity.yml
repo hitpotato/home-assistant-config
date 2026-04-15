@@ -2,12 +2,6 @@ name: YAML Parity
 
 on:
   pull_request:
-    paths:
-      - configuration.yaml
-      - automations.yaml
-      - scripts/sanitize_yaml.py
-      - scripts/check_yaml_parity.py
-      - .github/workflows/yaml-parity.yml
 
 jobs:
   yaml-parity:
