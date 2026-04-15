@@ -297,6 +297,17 @@ def branch_has_commits_over_main(repo_path: Path, branch_name: str) -> bool:
     return ahead_count != "0"
 
 
+def refresh_origin_main(repo_path: Path, repo_label: str) -> None:
+    """Fetch the latest origin/main before making PR decisions."""
+    try:
+        run_git(repo_path, "fetch", "origin", MAIN_BRANCH)
+    except subprocess.CalledProcessError as error:
+        raise SystemExit(
+            f"Could not refresh {repo_label} origin/{MAIN_BRANCH}.\n"
+            f"{failure_details(error)}"
+        ) from error
+
+
 def start() -> None:
     """Create or switch the matching private branch."""
     private_repo = resolve_private_repo_path()
@@ -353,6 +364,9 @@ def open_prs() -> None:
             "Private repo has tracked changes.\n"
             "Commit or stash them before running yaml_flow open-prs."
         )
+
+    refresh_origin_main(REPO_ROOT, "public repo")
+    refresh_origin_main(private_repo, "private repo")
 
     if not branch_has_commits_over_main(REPO_ROOT, public_branch):
         raise SystemExit(
