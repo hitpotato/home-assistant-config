@@ -14,6 +14,7 @@ PUBLIC_CONFIGURATION = REPO_ROOT / "configuration.yaml"
 PUBLIC_AUTOMATIONS = REPO_ROOT / "automations.yaml"
 DEFAULT_PRIVATE_REPO = REPO_ROOT / ".local" / "real"
 MAIN_BRANCH = "main"
+PUBLIC_PR_TEMPLATE = REPO_ROOT / ".github" / "pull_request_template.md"
 PRIVATE_CONFIGURATION = "configuration.yaml"
 PRIVATE_AUTOMATIONS = "automations.yaml"
 
@@ -267,16 +268,32 @@ def ensure_pr(repo_path: Path, repo_label: str, branch_name: str) -> tuple[str, 
         return existing_url, True
 
     try:
-        created_url = run_gh(
-            repo_path,
-            "pr",
-            "create",
-            "--base",
-            MAIN_BRANCH,
-            "--head",
-            branch_name,
-            "--fill",
-        )
+        if repo_path == REPO_ROOT and PUBLIC_PR_TEMPLATE.exists():
+            title = run_git(repo_path, "log", "-1", "--pretty=%s")
+            created_url = run_gh(
+                repo_path,
+                "pr",
+                "create",
+                "--base",
+                MAIN_BRANCH,
+                "--head",
+                branch_name,
+                "--title",
+                title,
+                "--body-file",
+                str(PUBLIC_PR_TEMPLATE),
+            )
+        else:
+            created_url = run_gh(
+                repo_path,
+                "pr",
+                "create",
+                "--base",
+                MAIN_BRANCH,
+                "--head",
+                branch_name,
+                "--fill",
+            )
     except subprocess.CalledProcessError as error:
         raise SystemExit(
             f"Could not create the {repo_label} pull request.\n"
