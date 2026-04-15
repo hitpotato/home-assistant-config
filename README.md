@@ -72,18 +72,30 @@ Use the workflow helper like this:
 ```bash
 uv run python scripts/yaml_flow.py start
 uv run python scripts/yaml_flow.py refresh
+uv run python scripts/yaml_flow.py open-prs
 ```
 
 - `start`
   - reads the current public branch name
   - switches or creates the matching private branch
   - creates a new private branch from private `origin/main` if needed
-  - refreshes the tracked public-safe YAML from the private repo
+  - does not rewrite public YAML
+  - use `refresh` explicitly when you want to update the tracked public-safe YAML
 
 - `refresh`
   - reads the current private working tree, including uncommitted YAML edits
   - rewrites the tracked public-safe YAML in this repo
   - refuses to run if tracked public `configuration.yaml` or `automations.yaml` already have local edits
+
+- `open-prs`
+  - only runs from a feature branch, never `main`
+  - requires the public and private repos to already be on the same current branch
+  - ignores untracked scratch files, but refuses to run if either repo has tracked edits
+  - skips the private PR when the private branch has no commits ahead of private `main`
+  - otherwise pushes the private branch first, then creates or reuses the matching private PR into `main`
+  - pushes the public branch second, then creates or reuses the matching public PR into `main`
+  - refuses to run when the public branch has no commits ahead of public `main`
+  - prints each PR URL as soon as that side succeeds, so reruns are safe and partial failures are obvious
 
 This keeps the private repo as the source of truth for real YAML while the public repo stays safe for tests and review.
 

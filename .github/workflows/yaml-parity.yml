@@ -2,12 +2,6 @@ name: YAML Parity
 
 on:
   pull_request:
-    paths:
-      - configuration.yaml
-      - automations.yaml
-      - scripts/sanitize_yaml.py
-      - scripts/check_yaml_parity.py
-      - .github/workflows/yaml-parity.yml
 
 jobs:
   yaml-parity:
@@ -24,8 +18,37 @@ jobs:
     steps:
       - name: Check out public repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide whether YAML parity applies
+        id: parity-scope
+        run: |
+          changed_files="$(git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}")"
+
+          needs_parity=false
+          while IFS= read -r path; do
+            case "$path" in
+              configuration.yaml|automations.yaml|scripts/sanitize_yaml.py|scripts/check_yaml_parity.py|.github/workflows/yaml-parity.yml)
+                needs_parity=true
+                break
+                ;;
+            esac
+          done <<EOF
+          $changed_files
+          EOF
+
+          echo "needs_parity=$needs_parity" >> "$GITHUB_OUTPUT"
+
+      - name: Skip parity for unrelated PRs
+        if: ${{ steps.parity-scope.outputs.needs_parity != 'true' }}
+        run: |
+          echo "Skipping YAML parity: this PR does not touch mirrored YAML or parity tooling."
 
       - name: Validate private repo configuration
+        if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
         run: |
           if [ -z "$PRIVATE_REPO_OWNER" ] || [ -z "$PRIVATE_REPO_NAME" ]; then
             echo "::error::Missing PRIVATE_YAML_REPO_OWNER or PRIVATE_YAML_REPO_NAME repository variable."
@@ -34,6 +57,7 @@ jobs:
 
       - name: Create GitHub App token
         id: app-token
+        if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.PRIVATE_YAML_APP_ID }}
@@ -42,6 +66,7 @@ jobs:
           repositories: ${{ vars.PRIVATE_YAML_REPO_NAME }}
 
       - name: Verify private repo access
+        if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -54,6 +79,7 @@ jobs:
           fi
 
       - name: Verify matching private branch exists
+        if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -66,6 +92,7 @@ jobs:
           fi
 
       - name: Check out private repo
+        if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ env.PRIVATE_REPO }}
@@ -75,6 +102,7 @@ jobs:
           persist-credentials: false
 
       - name: Check YAML parity
+        if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
         run: |
           python scripts/check_yaml_parity.py \
             --public-repo . \
