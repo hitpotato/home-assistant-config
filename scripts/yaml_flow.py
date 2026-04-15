@@ -287,20 +287,18 @@ def ensure_pr(repo_path: Path, repo_label: str, branch_name: str) -> tuple[str, 
 
 
 def start() -> None:
-    """Create or switch the matching private branch, then refresh the mirror."""
+    """Create or switch the matching private branch."""
     private_repo = resolve_private_repo_path()
     ensure_repo_exists(private_repo)
     branch_name = current_public_branch()
-    ensure_clean_public_yaml("start")
 
     switch_or_create_private_branch(private_repo, branch_name)
-    sanitize_from_private_repo(private_repo)
 
     print(f"Ready on branch {branch_name}.")
     print(f"Private repo: {private_repo}")
     print(f"Private repo state: {'dirty' if repo_is_dirty(private_repo) else 'clean'}")
-    print("Sanitized private YAML into the public repo.")
-    print_public_yaml_result()
+    print("Private branch is ready.")
+    print("Run `uv run python scripts/yaml_flow.py refresh` when you want to rewrite public YAML.")
 
 
 def refresh() -> None:

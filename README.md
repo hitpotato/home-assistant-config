@@ -79,7 +79,8 @@ uv run python scripts/yaml_flow.py open-prs
   - reads the current public branch name
   - switches or creates the matching private branch
   - creates a new private branch from private `origin/main` if needed
-  - refreshes the tracked public-safe YAML from the private repo
+  - does not rewrite public YAML
+  - use `refresh` explicitly when you want to update the tracked public-safe YAML
 
 - `refresh`
   - reads the current private working tree, including uncommitted YAML edits
