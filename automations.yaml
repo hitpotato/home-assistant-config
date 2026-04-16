@@ -205,7 +205,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:40:00'
+          duration: '00:50:00'
     - conditions:
       - condition: trigger
         id: tv_changed
@@ -223,7 +223,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:40:00'
+          duration: '00:50:00'
     - conditions:
       - condition: trigger
         id: plug_changed
@@ -241,7 +241,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:40:00'
+          duration: '00:50:00'
     - conditions:
       - condition: trigger
         id: automations_reenabled
@@ -253,7 +253,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:40:00'
+          duration: '00:50:00'
   mode: restart
 - id: '1773026091419'
   alias: "Bedroom: Safe Auto-Off When Vacant"
