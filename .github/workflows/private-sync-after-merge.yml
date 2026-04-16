@@ -107,7 +107,7 @@ jobs:
           ref: ${{ env.PRIVATE_BRANCH }}
           token: ${{ steps.app-token.outputs.token }}
           path: private-repo
-          persist-credentials: false
+          persist-credentials: true
           fetch-depth: 0
 
       - name: Detect whether private branch still has work to land

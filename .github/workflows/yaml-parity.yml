@@ -23,10 +23,13 @@ jobs:
 
       - name: Decide whether YAML parity applies
         id: parity-scope
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          changed_files="$(git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}")"
+          changed_files="$(gh pr view "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --json files \
+            --jq '.files[].path')"
 
           needs_parity=false
           while IFS= read -r path; do
