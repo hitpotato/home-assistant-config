@@ -1,0 +1,157 @@
+name: Private Sync After Public Merge
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  sync-private:
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      PRIVATE_REPO_OWNER: ${{ vars.PRIVATE_YAML_REPO_OWNER }}
+      PRIVATE_REPO_NAME: ${{ vars.PRIVATE_YAML_REPO_NAME }}
+      PRIVATE_REPO: ${{ vars.PRIVATE_YAML_REPO_OWNER }}/${{ vars.PRIVATE_YAML_REPO_NAME }}
+      PRIVATE_BRANCH: ${{ github.event.pull_request.head.ref }}
+      PUBLIC_PR_NUMBER: ${{ github.event.pull_request.number }}
+      PUBLIC_PR_TITLE: ${{ github.event.pull_request.title }}
+      PUBLIC_PR_URL: ${{ github.event.pull_request.html_url }}
+    steps:
+      - name: Decide whether private sync applies
+        id: sync-scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          changed_files="$(gh pr view "$PUBLIC_PR_NUMBER" --repo "${{ github.repository }}" --json files --jq '.files[].path')"
+
+          needs_private_sync=false
+          while IFS= read -r path; do
+            case "$path" in
+              configuration.yaml|automations.yaml)
+                needs_private_sync=true
+                break
+                ;;
+            esac
+          done <<EOF
+          $changed_files
+          EOF
+
+          echo "needs_private_sync=$needs_private_sync" >> "$GITHUB_OUTPUT"
+
+      - name: Skip private sync for unrelated PRs
+        if: ${{ steps.sync-scope.outputs.needs_private_sync != 'true' }}
+        run: |
+          echo "Skipping private sync: this PR does not change mirrored YAML files."
+
+      - name: Validate private repo configuration
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' }}
+        run: |
+          if [ -z "$PRIVATE_REPO_OWNER" ] || [ -z "$PRIVATE_REPO_NAME" ]; then
+            echo "::error::Missing PRIVATE_YAML_REPO_OWNER or PRIVATE_YAML_REPO_NAME repository variable."
+            exit 1
+          fi
+
+      - name: Create GitHub App token
+        id: app-token
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' }}
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PRIVATE_YAML_APP_ID }}
+          private-key: ${{ secrets.PRIVATE_YAML_APP_PRIVATE_KEY }}
+          owner: ${{ vars.PRIVATE_YAML_REPO_OWNER }}
+          repositories: ${{ vars.PRIVATE_YAML_REPO_NAME }}
+
+      - name: Verify private repo access
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if ! curl -fsS \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$PRIVATE_REPO" > /dev/null; then
+            echo "::error::The post-merge private sync could not access the private YAML repo."
+            exit 1
+          fi
+
+      - name: Check whether matching private branch exists
+        id: branch-check
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if curl -fsS \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$PRIVATE_REPO/branches/$PRIVATE_BRANCH" > /dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip when no matching private branch exists
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' && steps.branch-check.outputs.exists != 'true' }}
+        run: |
+          echo "No matching private branch exists. Nothing to sync."
+
+      - name: Check out private repo
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' && steps.branch-check.outputs.exists == 'true' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PRIVATE_REPO }}
+          ref: ${{ env.PRIVATE_BRANCH }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: private-repo
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Detect whether private branch still has work to land
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' && steps.branch-check.outputs.exists == 'true' }}
+        id: private-diff
+        run: |
+          git -C private-repo fetch origin main
+          ahead_count="$(git -C private-repo rev-list --count origin/main..HEAD)"
+          echo "ahead_count=$ahead_count" >> "$GITHUB_OUTPUT"
+
+      - name: Skip when private branch has no diff
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' && steps.branch-check.outputs.exists == 'true' && steps.private-diff.outputs.ahead_count == '0' }}
+        run: |
+          echo "Private branch exists but has no commits ahead of main. Nothing to sync."
+
+      - name: Create or reuse private PR
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' && steps.branch-check.outputs.exists == 'true' && steps.private-diff.outputs.ahead_count != '0' }}
+        id: private-pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          existing_url="$(gh pr list --repo "$PRIVATE_REPO" --state open --head "$PRIVATE_BRANCH" --base main --json url --jq '.[0].url // ""')"
+          if [ -n "$existing_url" ]; then
+            echo "url=$existing_url" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          body_file="$(mktemp)"
+          cat > "$body_file" <<EOF
+          ## Linked PRs
+
+          - Public PR: $PUBLIC_PR_URL
+
+          ## Notes
+
+          - Created automatically after merged public PR #$PUBLIC_PR_NUMBER.
+          EOF
+
+          created_url="$(gh pr create --repo "$PRIVATE_REPO" --base main --head "$PRIVATE_BRANCH" --title "$PUBLIC_PR_TITLE" --body-file "$body_file")"
+          echo "url=$created_url" >> "$GITHUB_OUTPUT"
+
+      - name: Merge private PR
+        if: ${{ steps.sync-scope.outputs.needs_private_sync == 'true' && steps.branch-check.outputs.exists == 'true' && steps.private-diff.outputs.ahead_count != '0' }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr merge "${{ steps.private-pr.outputs.url }}" --repo "$PRIVATE_REPO" --merge

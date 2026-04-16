@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import subprocess
 from pathlib import Path
@@ -22,18 +21,6 @@ def run_git(repo_path: Path, *args: str) -> str:
     """Run one git command and return stripped stdout."""
     result = subprocess.run(
         ("git", "-C", str(repo_path), *args),
-        check=True,
-        text=True,
-        capture_output=True,
-    )
-    return result.stdout.strip()
-
-
-def run_gh(repo_path: Path, *args: str) -> str:
-    """Run one gh command in one repo and return stripped stdout."""
-    result = subprocess.run(
-        ("gh", *args),
-        cwd=repo_path,
         check=True,
         text=True,
         capture_output=True,
@@ -220,72 +207,6 @@ def push_branch(repo_path: Path, repo_label: str, branch_name: str) -> None:
         ) from error
 
 
-def find_matching_pr_url(repo_path: Path, branch_name: str, *, base_branch: str) -> str | None:
-    """Return one open PR URL only when head and base exactly match."""
-    try:
-        output = run_gh(
-            repo_path,
-            "pr",
-            "list",
-            "--state",
-            "open",
-            "--head",
-            branch_name,
-            "--base",
-            base_branch,
-            "--json",
-            "url,headRefName,baseRefName",
-        )
-    except subprocess.CalledProcessError as error:
-        raise SystemExit(
-            "Could not inspect existing pull requests.\n"
-            f"{failure_details(error)}"
-        ) from error
-
-    try:
-        pull_requests = json.loads(output)
-    except json.JSONDecodeError as error:
-        raise SystemExit(
-            "GitHub CLI returned unreadable pull request data.\n"
-            f"{output}"
-        ) from error
-
-    for pull_request in pull_requests:
-        if (
-            pull_request["headRefName"] == branch_name
-            and pull_request["baseRefName"] == base_branch
-        ):
-            return pull_request["url"]
-
-    return None
-
-
-def ensure_pr(repo_path: Path, repo_label: str, branch_name: str) -> tuple[str, bool]:
-    """Create one PR if needed, or return the existing matching PR URL."""
-    existing_url = find_matching_pr_url(repo_path, branch_name, base_branch=MAIN_BRANCH)
-    if existing_url:
-        return existing_url, True
-
-    try:
-        created_url = run_gh(
-            repo_path,
-            "pr",
-            "create",
-            "--base",
-            MAIN_BRANCH,
-            "--head",
-            branch_name,
-            "--fill",
-        )
-    except subprocess.CalledProcessError as error:
-        raise SystemExit(
-            f"Could not create the {repo_label} pull request.\n"
-            f"{failure_details(error)}"
-        ) from error
-
-    return created_url.splitlines()[-1], False
-
-
 def branch_has_commits_over_main(repo_path: Path, branch_name: str) -> bool:
     """Return True when one branch is ahead of origin/main."""
     ahead_count = run_git(
@@ -337,14 +258,14 @@ def refresh() -> None:
     print_public_yaml_result()
 
 
-def open_prs() -> None:
-    """Push both branches and create or reuse the matching PR pair."""
+def push_private_branch() -> None:
+    """Push the matching private branch when a YAML PR needs parity."""
     private_repo = resolve_private_repo_path()
     ensure_repo_exists(private_repo)
     public_branch = current_public_branch()
 
     if public_branch == MAIN_BRANCH:
-        raise SystemExit("yaml_flow open-prs only works from a feature branch, not main.")
+        raise SystemExit("yaml_flow push-private-branch only works from a feature branch, not main.")
 
     private_branch = current_branch(private_repo, "private")
     if private_branch != public_branch:
@@ -356,13 +277,13 @@ def open_prs() -> None:
     if repo_has_tracked_changes(REPO_ROOT):
         raise SystemExit(
             "Public repo has tracked changes.\n"
-            "Commit or stash them before running yaml_flow open-prs."
+            "Commit or stash them before running yaml_flow push-private-branch."
         )
 
     if repo_has_tracked_changes(private_repo):
         raise SystemExit(
             "Private repo has tracked changes.\n"
-            "Commit or stash them before running yaml_flow open-prs."
+            "Commit or stash them before running yaml_flow push-private-branch."
         )
 
     refresh_origin_main(REPO_ROOT, "public repo")
@@ -371,12 +292,11 @@ def open_prs() -> None:
     if not branch_has_commits_over_main(REPO_ROOT, public_branch):
         raise SystemExit(
             f"Public branch {public_branch} has no commits ahead of origin/{MAIN_BRANCH}.\n"
-            "There is nothing to open a public pull request for."
+            "There is nothing to prepare for a public pull request."
         )
 
     private_has_diff = branch_has_commits_over_main(private_repo, private_branch)
 
-    print(f"Public repo: {REPO_ROOT}")
     print(f"Private repo: {private_repo}")
     print(f"Branch: {public_branch}")
 
@@ -384,26 +304,11 @@ def open_prs() -> None:
         print("Pushing private branch...")
         push_branch(private_repo, "private", private_branch)
         print("Private branch pushed.")
-
-        print("Ensuring private pull request...")
-        private_pr_url, private_reused = ensure_pr(private_repo, "private", private_branch)
-        print(f"Private PR {'reused' if private_reused else 'created'}: {private_pr_url}")
+        print("The matching private branch is ready for YAML parity.")
     else:
         print(f"Private branch {private_branch} has no commits ahead of origin/{MAIN_BRANCH}.")
-        print("Skipping private push and private pull request.")
-
-    print("Pushing public branch...")
-    push_branch(REPO_ROOT, "public", public_branch)
-    print("Public branch pushed.")
-
-    print("Ensuring public pull request...")
-    public_pr_url, public_reused = ensure_pr(REPO_ROOT, "public", public_branch)
-    print(f"Public PR {'reused' if public_reused else 'created'}: {public_pr_url}")
-
-    if private_has_diff:
-        print("Both pull requests are ready.")
-    else:
-        print("Public pull request is ready. No private pull request was needed for this branch.")
+        print("No private sync is needed for this branch.")
+    print("Push the public branch and create the public pull request manually.")
 
 
 def parse_args() -> argparse.Namespace:
@@ -414,8 +319,8 @@ def parse_args() -> argparse.Namespace:
     subcommands.add_parser("start", help="Create or switch the matching private branch.")
     subcommands.add_parser("refresh", help="Refresh tracked public YAML from private real YAML.")
     subcommands.add_parser(
-        "open-prs",
-        help="Push both branches and create or reuse the matching private/public PR pair.",
+        "push-private-branch",
+        help="Push the matching private branch when a YAML PR needs parity.",
     )
 
     return parser.parse_args()
@@ -429,8 +334,8 @@ def main() -> None:
         start()
     elif args.command == "refresh":
         refresh()
-    elif args.command == "open-prs":
-        open_prs()
+    elif args.command == "push-private-branch":
+        push_private_branch()
     else:
         raise SystemExit(f"Unknown command: {args.command}")
 

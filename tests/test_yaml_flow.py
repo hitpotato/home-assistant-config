@@ -85,6 +85,21 @@ def seed_private_remote(
     git(seed_path, "push", "-u", "origin", "main")
 
 
+def seed_public_repo_with_origin(
+    public_repo: Path,
+    public_remote: Path,
+    *,
+    configuration_text: str,
+    automations_text: str,
+) -> None:
+    """Create a public repo with origin/main already pushed."""
+    init_repo(public_repo)
+    git(public_repo, "remote", "add", "origin", str(public_remote))
+    write_public_yaml(public_repo, configuration_text, automations_text)
+    commit_all(public_repo, "seed public main")
+    git(public_repo, "push", "-u", "origin", "main")
+
+
 def patch_repo_paths(
     monkeypatch: pytest.MonkeyPatch,
     *,
@@ -203,7 +218,7 @@ def test_refresh_uses_private_working_tree_state(
     assert "- automations.yaml" in output
 
 
-def test_start_creates_private_branch_from_origin_main_and_refreshes_public_yaml(
+def test_start_creates_private_branch_from_origin_main_without_rewriting_public_yaml(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -233,14 +248,16 @@ def test_start_creates_private_branch_from_origin_main_and_refreshes_public_yaml
     yaml_flow.start()
 
     configuration_text = (public_repo / "configuration.yaml").read_text(encoding="utf-8")
+    automations_text = (public_repo / "automations.yaml").read_text(encoding="utf-8")
     output = capsys.readouterr().out
 
     assert git(private_repo, "branch", "--show-current") == branch_name
     assert git(private_repo, "rev-parse", branch_name) == git(private_repo, "rev-parse", "origin/main")
-    assert "mode: start" in configuration_text
-    assert "notify.mobile_app_longchen_iphone" not in configuration_text
+    assert configuration_text == "mode: public\n"
+    assert automations_text == "- alias: public\n"
     assert f"Ready on branch {branch_name}." in output
     assert "Private repo state: clean" in output
+    assert "Private branch is ready." in output
 
 
 def test_start_tracks_existing_remote_branch_when_local_branch_is_missing(
@@ -282,3 +299,158 @@ def test_start_tracks_existing_remote_branch_when_local_branch_is_missing(
 
     assert git(private_repo, "branch", "--show-current") == branch_name
     assert git(private_repo, "rev-parse", branch_name) == git(private_repo, "rev-parse", f"origin/{branch_name}")
+
+
+def remote_branch_exists(remote_path: Path, branch_name: str) -> bool:
+    """Return True if a bare remote currently has one branch head."""
+    result = subprocess.run(
+        ("git", "ls-remote", "--heads", str(remote_path), branch_name),
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    return bool(result.stdout.strip())
+
+
+def test_push_private_branch_pushes_matching_private_branch_for_yaml_change(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Push-private-branch should publish the matching private branch when it has real work."""
+    public_repo = tmp_path / "public"
+    public_remote = tmp_path / "public-remote.git"
+    private_remote = tmp_path / "private-remote.git"
+    private_seed = tmp_path / "private-seed"
+    private_repo = tmp_path / "private"
+    branch_name = "feature/paired-yaml-change"
+
+    init_bare_remote(public_remote)
+    seed_public_repo_with_origin(
+        public_repo,
+        public_remote,
+        configuration_text="mode: public-main\n",
+        automations_text="- alias: public-main\n",
+    )
+    git(public_repo, "switch", "-c", branch_name)
+    write_public_yaml(public_repo, "mode: sanitized-branch\n", "- alias: sanitized-branch\n")
+    commit_all(public_repo, "public yaml branch change")
+
+    init_bare_remote(private_remote)
+    seed_private_remote(
+        private_remote,
+        private_seed,
+        configuration_text="mode: real-main\nnotify_target: notify.mobile_app_longchen_iphone\n",
+        automations_text="- alias: real-main\n",
+    )
+    clone_private_remote(private_remote, private_repo)
+    patch_repo_paths(monkeypatch, public_repo=public_repo, private_repo=private_repo)
+
+    yaml_flow.start()
+    capsys.readouterr()
+
+    write_private_yaml(
+        private_repo,
+        "mode: real-branch\nnotify_target: notify.mobile_app_longchen_iphone\n",
+        "- alias: real-branch\n",
+    )
+    commit_all(private_repo, "private yaml branch change")
+
+    yaml_flow.push_private_branch()
+
+    git(private_repo, "fetch", "origin")
+    output = capsys.readouterr().out
+
+    assert remote_branch_exists(private_remote, branch_name)
+    assert git(private_repo, "rev-parse", branch_name) == git(private_repo, "rev-parse", f"origin/{branch_name}")
+    assert "Pushing private branch..." in output
+    assert "Private branch pushed." in output
+    assert "The matching private branch is ready for YAML parity." in output
+    assert "Push the public branch and create the public pull request manually." in output
+
+
+def test_push_private_branch_noops_for_public_only_branch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Push-private-branch should succeed without pushing when there is no private diff."""
+    public_repo = tmp_path / "public"
+    public_remote = tmp_path / "public-remote.git"
+    private_remote = tmp_path / "private-remote.git"
+    private_seed = tmp_path / "private-seed"
+    private_repo = tmp_path / "private"
+    branch_name = "feature/public-only-docs"
+
+    init_bare_remote(public_remote)
+    seed_public_repo_with_origin(
+        public_repo,
+        public_remote,
+        configuration_text="mode: public-main\n",
+        automations_text="- alias: public-main\n",
+    )
+    git(public_repo, "switch", "-c", branch_name)
+    (public_repo / "README.md").write_text("docs change\n", encoding="utf-8")
+    commit_all(public_repo, "public-only change")
+
+    init_bare_remote(private_remote)
+    seed_private_remote(
+        private_remote,
+        private_seed,
+        configuration_text="mode: real-main\n",
+        automations_text="- alias: real-main\n",
+    )
+    clone_private_remote(private_remote, private_repo)
+    patch_repo_paths(monkeypatch, public_repo=public_repo, private_repo=private_repo)
+
+    yaml_flow.start()
+    capsys.readouterr()
+
+    yaml_flow.push_private_branch()
+
+    output = capsys.readouterr().out
+
+    assert not remote_branch_exists(private_remote, branch_name)
+    assert f"Private branch {branch_name} has no commits ahead of origin/main." in output
+    assert "No private sync is needed for this branch." in output
+    assert "Push the public branch and create the public pull request manually." in output
+
+
+def test_push_private_branch_refreshes_public_origin_main_before_branch_decision(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Push-private-branch should refresh public origin/main before it decides a PR is needed."""
+    public_repo = tmp_path / "public"
+    public_remote = tmp_path / "public-remote.git"
+    private_remote = tmp_path / "private-remote.git"
+    private_seed = tmp_path / "private-seed"
+    private_repo = tmp_path / "private"
+    branch_name = "feature/already-merged"
+
+    init_bare_remote(public_remote)
+    seed_public_repo_with_origin(
+        public_repo,
+        public_remote,
+        configuration_text="mode: public-main\n",
+        automations_text="- alias: public-main\n",
+    )
+    git(public_repo, "switch", "-c", branch_name)
+    (public_repo / "README.md").write_text("feature branch change\n", encoding="utf-8")
+    commit_all(public_repo, "feature change")
+    git(public_repo, "push", "origin", f"{branch_name}:main")
+
+    init_bare_remote(private_remote)
+    seed_private_remote(
+        private_remote,
+        private_seed,
+        configuration_text="mode: real-main\n",
+        automations_text="- alias: real-main\n",
+    )
+    clone_private_remote(private_remote, private_repo)
+    patch_repo_paths(monkeypatch, public_repo=public_repo, private_repo=private_repo)
+
+    yaml_flow.start()
+
+    with pytest.raises(SystemExit, match="There is nothing to prepare for a public pull request."):
+        yaml_flow.push_private_branch()
