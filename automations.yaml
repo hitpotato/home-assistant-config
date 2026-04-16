@@ -440,9 +440,6 @@
         then:
         - action: input_boolean.turn_off
           target:
-            entity_id: input_boolean.bedroom_focus_override_active
-        - action: input_boolean.turn_off
-          target:
             entity_id: input_boolean.focus_mode
       - if:
         - condition: state

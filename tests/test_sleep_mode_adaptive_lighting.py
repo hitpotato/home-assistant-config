@@ -179,3 +179,43 @@ async def test_sleep_start_keeps_saved_on_state_when_bridge_is_loaded(
 
     assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
     assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "on"
+
+
+async def test_sleep_from_focus_turns_off_desk_light_before_focus_clears(
+    hass,
+    sleep_with_resume_bridge_config,
+    focus_mode_lighting_config,
+    switch_service_calls,
+    input_boolean_service_calls,
+    light_service_calls,
+) -> None:
+    """Sleep should let Focus clean up the desk lamp before Focus deactivates."""
+
+    assert await async_setup_component(
+        hass,
+        "automation",
+        {
+            "automation": [
+                sleep_with_resume_bridge_config["automation"][0],
+                sleep_with_resume_bridge_config["automation"][1],
+                focus_mode_lighting_config["automation"][0],
+            ]
+        },
+    )
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "on")
+    hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
+    hass.states.async_set("light.desk_light", "on")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("input_boolean.focus_mode").state == "off"
+    assert hass.states.get("input_boolean.bedroom_focus_override_active").state == "off"
+    assert hass.states.get("light.desk_light").state == "off"
