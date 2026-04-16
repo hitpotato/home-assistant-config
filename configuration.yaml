@@ -15,7 +15,7 @@ input_boolean:
 
 timer:
   bedroom_occupancy_hold:
-    duration: "00:40:00"
+    duration: "00:50:00"
 
 template:
   - binary_sensor:
