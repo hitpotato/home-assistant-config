@@ -76,6 +76,19 @@ uv run python scripts/yaml_flow.py push-private-branch
 git push -u origin <branch-name>
 ```
 
+Typical mirrored YAML PR flow:
+
+1. Create a public feature branch.
+2. Run `uv run python scripts/yaml_flow.py start`.
+3. Edit the real YAML in `.local/real/`.
+4. Commit the private repo changes.
+5. Run `uv run python scripts/yaml_flow.py refresh`.
+6. Commit the public sanitized YAML changes.
+7. Run `uv run python scripts/yaml_flow.py push-private-branch`.
+8. Push the public branch and open the public PR manually using `.github/pull_request_template.md`.
+9. Merge the public PR.
+10. `.github/workflows/private-sync-after-merge.yml` creates or reuses and merges the matching private PR automatically.
+
 - `start`
   - reads the current public branch name
   - switches or creates the matching private branch
@@ -126,6 +139,14 @@ uv run python scripts/yaml_flow.py refresh
 ```
 
 Then commit the updated public YAML and push again.
+
+If parity fails because the matching private branch was not pushed yet, run:
+
+```bash
+uv run python scripts/yaml_flow.py push-private-branch
+```
+
+Then push the branch again or rerun the PR checks.
 
 ## Test Setup
 
