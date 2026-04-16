@@ -72,7 +72,8 @@ Use the workflow helper like this:
 ```bash
 uv run python scripts/yaml_flow.py start
 uv run python scripts/yaml_flow.py refresh
-uv run python scripts/yaml_flow.py open-prs
+uv run python scripts/yaml_flow.py push-private-branch
+git push -u origin <branch-name>
 ```
 
 - `start`
@@ -87,15 +88,14 @@ uv run python scripts/yaml_flow.py open-prs
   - rewrites the tracked public-safe YAML in this repo
   - refuses to run if tracked public `configuration.yaml` or `automations.yaml` already have local edits
 
-- `open-prs`
+- `push-private-branch`
   - only runs from a feature branch, never `main`
   - requires the public and private repos to already be on the same current branch
   - ignores untracked scratch files, but refuses to run if either repo has tracked edits
-  - skips the private PR when the private branch has no commits ahead of private `main`
-  - otherwise pushes the private branch first, then creates or reuses the matching private PR into `main`
-  - pushes the public branch second, then creates or reuses the matching public PR into `main`
-  - refuses to run when the public branch has no commits ahead of public `main`
-  - prints each PR URL as soon as that side succeeds, so reruns are safe and partial failures are obvious
+  - refreshes `origin/main` in both repos before it compares branch state
+  - if the private branch has commits ahead of private `main`, it pushes the matching private branch for YAML parity
+  - if the private branch has no diff, it exits cleanly with “no private sync needed”
+  - does not create a public PR; push the public branch and open the public PR manually using the repo template
 
 This keeps the private repo as the source of truth for real YAML while the public repo stays safe for tests and review.
 
@@ -104,9 +104,11 @@ This keeps the private repo as the source of truth for real YAML while the publi
 The repo also includes a parity workflow at `.github/workflows/yaml-parity.yml`.
 
 - It only runs for trusted same-repo pull requests.
-- It checks that the matching private branch exists.
+- It always appears on public PRs, but only blocks PRs that change `configuration.yaml` or `automations.yaml`.
+- For mirrored YAML changes, it checks that the matching private branch exists.
 - It sanitizes the private repo YAML and compares it against the tracked public YAML.
 - The comparison canonicalizes random mask values first, so CI stays stable without making public masks stable across history.
+- After a mirrored YAML PR merges, `.github/workflows/private-sync-after-merge.yml` creates or reuses the matching private PR and merges it automatically.
 
 Repository configuration needed for that workflow:
 

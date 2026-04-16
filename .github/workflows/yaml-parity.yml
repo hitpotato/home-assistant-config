@@ -31,7 +31,7 @@ jobs:
           needs_parity=false
           while IFS= read -r path; do
             case "$path" in
-              configuration.yaml|automations.yaml|scripts/sanitize_yaml.py|scripts/check_yaml_parity.py|.github/workflows/yaml-parity.yml)
+              configuration.yaml|automations.yaml)
                 needs_parity=true
                 break
                 ;;
@@ -45,7 +45,7 @@ jobs:
       - name: Skip parity for unrelated PRs
         if: ${{ steps.parity-scope.outputs.needs_parity != 'true' }}
         run: |
-          echo "Skipping YAML parity: this PR does not touch mirrored YAML or parity tooling."
+          echo "Skipping YAML parity: this PR does not change mirrored YAML files."
 
       - name: Validate private repo configuration
         if: ${{ steps.parity-scope.outputs.needs_parity == 'true' }}
@@ -87,7 +87,7 @@ jobs:
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/$PRIVATE_REPO/branches/$PRIVATE_BRANCH" > /dev/null; then
-            echo "::error::Matching private branch $PRIVATE_BRANCH was not found. Run \`uv run python scripts/yaml_flow.py start\` locally, then push the private branch."
+            echo "::error::Matching private branch $PRIVATE_BRANCH was not found. Run \`uv run python scripts/yaml_flow.py push-private-branch\` locally to push the matching private branch."
             exit 1
           fi
 
