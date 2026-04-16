@@ -111,6 +111,15 @@ def adaptive_lighting_resume_bridge_config(
 
 
 @pytest.fixture
+def sleep_mode_lighting_config(
+    automations_yaml: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Extract the tracked sleep-mode lighting automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1773033168449")
+    return {"automation": [automation]}
+
+
+@pytest.fixture
 def bedroom_hold_timer_automation_config(
     automations_yaml: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -177,4 +186,62 @@ def switch_service_calls(hass: HomeAssistant) -> list[ServiceCall]:
 
     hass.services.async_register("switch", "turn_on", handle_turn_on)
     hass.services.async_register("switch", "turn_off", handle_turn_off)
+    return calls
+
+
+@pytest.fixture
+def input_boolean_service_calls(hass: HomeAssistant) -> list[ServiceCall]:
+    """Register fake input_boolean services that also update entity state."""
+    calls: list[ServiceCall] = []
+
+    def set_entities_state(entity_id: str | list[str] | None, state: str) -> None:
+        """Mirror HA target handling: entity_id may be one id or a list of ids."""
+        if entity_id is None:
+            return
+        if isinstance(entity_id, str):
+            hass.states.async_set(entity_id, state)
+            return
+
+        for one_entity_id in entity_id:
+            hass.states.async_set(one_entity_id, state)
+
+    async def handle_turn_on(call: ServiceCall) -> None:
+        calls.append(call)
+        set_entities_state(call.data.get("entity_id"), "on")
+
+    async def handle_turn_off(call: ServiceCall) -> None:
+        calls.append(call)
+        set_entities_state(call.data.get("entity_id"), "off")
+
+    hass.services.async_register("input_boolean", "turn_on", handle_turn_on)
+    hass.services.async_register("input_boolean", "turn_off", handle_turn_off)
+    return calls
+
+
+@pytest.fixture
+def light_service_calls(hass: HomeAssistant) -> list[ServiceCall]:
+    """Register fake light services so light actions stay observable in tests."""
+    calls: list[ServiceCall] = []
+
+    def set_entities_state(entity_id: str | list[str] | None, state: str) -> None:
+        """Mirror HA target handling: entity_id may be one id or a list of ids."""
+        if entity_id is None:
+            return
+        if isinstance(entity_id, str):
+            hass.states.async_set(entity_id, state)
+            return
+
+        for one_entity_id in entity_id:
+            hass.states.async_set(one_entity_id, state)
+
+    async def handle_turn_on(call: ServiceCall) -> None:
+        calls.append(call)
+        set_entities_state(call.data.get("entity_id"), "on")
+
+    async def handle_turn_off(call: ServiceCall) -> None:
+        calls.append(call)
+        set_entities_state(call.data.get("entity_id"), "off")
+
+    hass.services.async_register("light", "turn_on", handle_turn_on)
+    hass.services.async_register("light", "turn_off", handle_turn_off)
     return calls

@@ -12,6 +12,8 @@ scene: !include scenes.yaml
 input_boolean:
   automations_enabled:
     name: Automations Enabled
+  bedroom_sleep_restore_adaptive_lighting:
+    name: Bedroom Sleep Restore Adaptive Lighting
 
 timer:
   bedroom_occupancy_hold:
