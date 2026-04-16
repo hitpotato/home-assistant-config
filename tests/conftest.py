@@ -120,6 +120,15 @@ def sleep_mode_lighting_config(
 
 
 @pytest.fixture
+def focus_mode_lighting_config(
+    automations_yaml: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Extract the tracked focus-mode lighting automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1773271583160")
+    return {"automation": [automation]}
+
+
+@pytest.fixture
 def bedroom_hold_timer_automation_config(
     automations_yaml: list[dict[str, Any]],
 ) -> dict[str, Any]:

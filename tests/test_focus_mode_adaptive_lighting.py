@@ -3,70 +3,69 @@ from __future__ import annotations
 from homeassistant.setup import async_setup_component
 
 
-async def test_sleep_start_records_on_state_cancels_focus_and_disables_main_al(
+async def test_focus_start_records_on_state_and_disables_main_al(
     hass,
-    sleep_mode_lighting_config,
-    switch_service_calls,
-    input_boolean_service_calls,
-    light_service_calls,
-) -> None:
-    """Sleep entry should save the main AL state before taking temporary control."""
-
-    hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("input_boolean.sleeping_mode", "off")
-    hass.states.async_set("input_boolean.focus_mode", "on")
-    hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
-    await hass.async_block_till_done()
-
-    assert await async_setup_component(hass, "automation", sleep_mode_lighting_config)
-
-    hass.states.async_set("input_boolean.sleeping_mode", "on")
-    await hass.async_block_till_done()
-
-    assert hass.states.get("input_boolean.focus_mode").state == "off"
-    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
-    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
-    assert all(
-        call.data.get("entity_id") != "switch.adaptive_lighting_sleep_mode_adaptive_lighting"
-        for call in switch_service_calls
-    )
-
-
-async def test_sleep_start_does_not_reapply_normal_al_while_cancelling_focus(
-    hass,
-    sleep_mode_lighting_config,
+    focus_mode_lighting_config,
     switch_service_calls,
     input_boolean_service_calls,
     light_service_calls,
     adaptive_lighting_calls,
 ) -> None:
-    """Sleep entry should suppress the Focus restore path while Sleep takes ownership."""
-
-    assert await async_setup_component(hass, "automation", sleep_mode_lighting_config)
+    """Focus entry should save AL ownership before it applies a custom desk-light scene."""
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
-    hass.states.async_set("input_boolean.focus_mode", "on")
+    hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
     await hass.async_block_till_done()
 
-    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    assert await async_setup_component(hass, "automation", focus_mode_lighting_config)
+
+    hass.states.async_set("input_boolean.focus_mode", "on")
     await hass.async_block_till_done()
 
-    assert hass.states.get("input_boolean.focus_mode").state == "off"
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
+    assert hass.states.get("light.desk_light").state == "on"
     assert adaptive_lighting_calls == []
 
 
-async def test_sleep_start_records_off_state_when_main_al_was_already_off(
+async def test_focus_cannot_stay_on_while_sleep_is_active(
     hass,
-    sleep_mode_lighting_config,
+    focus_mode_lighting_config,
+    switch_service_calls,
+    input_boolean_service_calls,
+    light_service_calls,
+    adaptive_lighting_calls,
+) -> None:
+    """Sleep mode should immediately reject Focus taking ownership."""
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "on")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
+    await hass.async_block_till_done()
+
+    assert await async_setup_component(hass, "automation", focus_mode_lighting_config)
+
+    hass.states.async_set("input_boolean.focus_mode", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("input_boolean.focus_mode").state == "off"
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert adaptive_lighting_calls == []
+
+
+async def test_focus_start_records_off_state_when_main_al_was_already_off(
+    hass,
+    focus_mode_lighting_config,
     switch_service_calls,
     input_boolean_service_calls,
     light_service_calls,
 ) -> None:
-    """Sleep entry should preserve a prior opt-out instead of forcing restore-on."""
+    """Focus entry should preserve a prior AL opt-out instead of forcing restore-on."""
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
@@ -75,35 +74,35 @@ async def test_sleep_start_records_off_state_when_main_al_was_already_off(
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
 
-    assert await async_setup_component(hass, "automation", sleep_mode_lighting_config)
+    assert await async_setup_component(hass, "automation", focus_mode_lighting_config)
 
-    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    hass.states.async_set("input_boolean.focus_mode", "on")
     await hass.async_block_till_done()
 
     assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "off"
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
 
 
-async def test_sleep_end_restores_main_al_and_reapplies_it_when_saved_on(
+async def test_focus_end_restores_main_al_and_reapplies_it_when_saved_on(
     hass,
-    sleep_mode_lighting_config,
+    focus_mode_lighting_config,
     switch_service_calls,
     input_boolean_service_calls,
     light_service_calls,
     adaptive_lighting_calls,
 ) -> None:
-    """Sleep exit should restore AL ownership when sleep started from normal AL mode."""
+    """Focus exit should restore AL ownership when Focus started from normal AL mode."""
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("input_boolean.sleeping_mode", "on")
-    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "on")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "on")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
 
-    assert await async_setup_component(hass, "automation", sleep_mode_lighting_config)
+    assert await async_setup_component(hass, "automation", focus_mode_lighting_config)
 
-    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
     await hass.async_block_till_done()
 
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "on"
@@ -113,26 +112,26 @@ async def test_sleep_end_restores_main_al_and_reapplies_it_when_saved_on(
     assert adaptive_lighting_calls[0].data["turn_on_lights"] is False
 
 
-async def test_sleep_end_keeps_main_al_off_when_saved_off(
+async def test_focus_end_keeps_main_al_off_when_saved_off(
     hass,
-    sleep_mode_lighting_config,
+    focus_mode_lighting_config,
     switch_service_calls,
     input_boolean_service_calls,
     light_service_calls,
     adaptive_lighting_calls,
 ) -> None:
-    """Sleep exit should respect a previously disabled main AL switch."""
+    """Focus exit should respect a previously disabled main AL switch."""
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("input_boolean.sleeping_mode", "on")
-    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "on")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
 
-    assert await async_setup_component(hass, "automation", sleep_mode_lighting_config)
+    assert await async_setup_component(hass, "automation", focus_mode_lighting_config)
 
-    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
     await hass.async_block_till_done()
 
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
