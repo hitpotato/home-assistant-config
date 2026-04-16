@@ -159,11 +159,13 @@
       - condition: or
         conditions:
         - condition: state
-          entity_id: input_boolean.sleeping_mode
+          entity_id: input_boolean.bedroom_sleep_override_active
           state: 'on'
         - condition: state
-          entity_id: input_boolean.focus_mode
+          entity_id: input_boolean.bedroom_focus_override_active
           state: 'on'
+      - condition: template
+        value_template: "{{ trigger.to_state.context.parent_id == none }}"
       sequence:
       - if:
         - condition: state
@@ -179,14 +181,14 @@
             entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
     - conditions:
       - condition: state
-        entity_id: input_boolean.sleeping_mode
-        state: 'off'
-      - condition: state
-        entity_id: input_boolean.focus_mode
-        state: 'off'
-      - condition: state
         entity_id: switch.adaptive_lighting_adaptive_lighting
         state: 'on'
+      - condition: state
+        entity_id: input_boolean.bedroom_sleep_override_active
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.bedroom_focus_override_active
+        state: 'off'
       sequence:
       - action: adaptive_lighting.set_manual_control
         data:
@@ -428,11 +430,17 @@
       - condition: trigger
         id: sleep_on
       sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.bedroom_sleep_override_active
       - if:
         - condition: state
           entity_id: input_boolean.focus_mode
           state: 'on'
         then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.bedroom_focus_override_active
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.focus_mode
@@ -451,6 +459,9 @@
       - action: switch.turn_off
         target:
           entity_id: switch.adaptive_lighting_adaptive_lighting
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.bedroom_sleep_override_active
       - repeat:
           count: 3
           sequence:
@@ -517,6 +528,9 @@
         - action: switch.turn_off
           target:
             entity_id: switch.adaptive_lighting_adaptive_lighting
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.bedroom_sleep_override_active
   mode: restart
 - id: '1773271583160'
   alias: "Bedroom: Focus Mode Sync"
@@ -535,6 +549,9 @@
         entity_id: input_boolean.focus_mode
         state: 'on'
       sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.bedroom_focus_override_active
       - if:
         - condition: state
           entity_id: input_boolean.sleeping_mode
@@ -559,6 +576,9 @@
         - action: switch.turn_off
           target:
             entity_id: switch.adaptive_lighting_adaptive_lighting
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.bedroom_focus_override_active
         - action: light.turn_off
           target:
             entity_id: light.bedroom_lights
@@ -575,30 +595,38 @@
         entity_id: input_boolean.focus_mode
         state: 'off'
       sequence:
-      - action: light.turn_off
-        target:
-          entity_id: light.desk_light
       - if:
         - condition: state
-          entity_id: input_boolean.sleeping_mode
-          state: 'off'
+          entity_id: input_boolean.bedroom_focus_override_active
+          state: 'on'
         then:
+        - action: light.turn_off
+          target:
+            entity_id: light.desk_light
         - if:
           - condition: state
-            entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-            state: 'on'
+            entity_id: input_boolean.sleeping_mode
+            state: 'off'
           then:
-          - action: switch.turn_on
-            target:
-              entity_id: switch.adaptive_lighting_adaptive_lighting
-          - action: adaptive_lighting.apply
-            data:
-              entity_id: switch.adaptive_lighting_adaptive_lighting
-              lights: light.bedroom_lights
-              transition: 3
-              turn_on_lights: false
-          else:
-          - action: switch.turn_off
-            target:
-              entity_id: switch.adaptive_lighting_adaptive_lighting
+          - if:
+            - condition: state
+              entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
+              state: 'on'
+            then:
+            - action: switch.turn_on
+              target:
+                entity_id: switch.adaptive_lighting_adaptive_lighting
+            - action: adaptive_lighting.apply
+              data:
+                entity_id: switch.adaptive_lighting_adaptive_lighting
+                lights: light.bedroom_lights
+                transition: 3
+                turn_on_lights: false
+            else:
+            - action: switch.turn_off
+              target:
+                entity_id: switch.adaptive_lighting_adaptive_lighting
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.bedroom_focus_override_active
   mode: restart

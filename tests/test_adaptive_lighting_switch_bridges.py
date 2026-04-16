@@ -84,6 +84,8 @@ async def test_turning_main_switch_on_clears_manual_control_and_reapplies_al(
     hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("light.bedroom_lights", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
@@ -118,6 +120,8 @@ async def test_turning_main_switch_on_during_sleep_does_not_reapply_al(
     hass.states.async_set("input_boolean.sleeping_mode", "on")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "on")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
 
@@ -151,6 +155,8 @@ async def test_turning_main_switch_on_during_focus_does_not_reapply_al(
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "on")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "on")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
 

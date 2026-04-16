@@ -16,6 +16,8 @@ async def test_sleep_start_records_on_state_cancels_focus_and_disables_main_al(
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "on")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
     await hass.async_block_till_done()
 
@@ -26,6 +28,8 @@ async def test_sleep_start_records_on_state_cancels_focus_and_disables_main_al(
 
     assert hass.states.get("input_boolean.focus_mode").state == "off"
     assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "on"
+    assert hass.states.get("input_boolean.bedroom_focus_override_active").state == "off"
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
     assert all(
         call.data.get("entity_id") != "switch.adaptive_lighting_sleep_mode_adaptive_lighting"
@@ -49,6 +53,8 @@ async def test_sleep_start_does_not_reapply_normal_al_while_cancelling_focus(
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "on")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
     await hass.async_block_till_done()
 
@@ -72,6 +78,8 @@ async def test_sleep_start_records_off_state_when_main_al_was_already_off(
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
 
@@ -81,6 +89,7 @@ async def test_sleep_start_records_off_state_when_main_al_was_already_off(
     await hass.async_block_till_done()
 
     assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "off"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "on"
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
 
 
@@ -98,6 +107,8 @@ async def test_sleep_end_restores_main_al_and_reapplies_it_when_saved_on(
     hass.states.async_set("input_boolean.sleeping_mode", "on")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "on")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
     await hass.async_block_till_done()
 
@@ -107,6 +118,7 @@ async def test_sleep_end_restores_main_al_and_reapplies_it_when_saved_on(
     await hass.async_block_till_done()
 
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "on"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "off"
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["entity_id"] == "switch.adaptive_lighting_adaptive_lighting"
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
@@ -127,6 +139,8 @@ async def test_sleep_end_keeps_main_al_off_when_saved_off(
     hass.states.async_set("input_boolean.sleeping_mode", "on")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "on")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
     await hass.async_block_till_done()
 
@@ -136,4 +150,32 @@ async def test_sleep_end_keeps_main_al_off_when_saved_off(
     await hass.async_block_till_done()
 
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "off"
     assert adaptive_lighting_calls == []
+
+
+async def test_sleep_start_keeps_saved_on_state_when_bridge_is_loaded(
+    hass,
+    sleep_with_resume_bridge_config,
+    switch_service_calls,
+    input_boolean_service_calls,
+    light_service_calls,
+) -> None:
+    """Sleep entry should keep its saved restore state even with the bridge loaded."""
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    await hass.async_block_till_done()
+
+    assert await async_setup_component(hass, "automation", sleep_with_resume_bridge_config)
+
+    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "on"
