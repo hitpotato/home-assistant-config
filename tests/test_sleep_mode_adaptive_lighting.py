@@ -219,3 +219,61 @@ async def test_sleep_from_focus_turns_off_desk_light_before_focus_clears(
     assert hass.states.get("input_boolean.focus_mode").state == "off"
     assert hass.states.get("input_boolean.bedroom_focus_override_active").state == "off"
     assert hass.states.get("light.desk_light").state == "off"
+
+
+async def test_sleep_from_real_focus_session_restores_original_al_state(
+    hass,
+    sleep_with_resume_bridge_config,
+    focus_mode_lighting_config,
+    switch_service_calls,
+    input_boolean_service_calls,
+    light_service_calls,
+    adaptive_lighting_calls,
+    adaptive_lighting_set_manual_control_calls,
+) -> None:
+    """Sleep should inherit Focus's saved AL state instead of re-saving the temporary off state."""
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    await hass.async_block_till_done()
+
+    assert await async_setup_component(
+        hass,
+        "automation",
+        {
+            "automation": [
+                sleep_with_resume_bridge_config["automation"][0],
+                sleep_with_resume_bridge_config["automation"][1],
+                focus_mode_lighting_config["automation"][0],
+            ]
+        },
+    )
+
+    hass.states.async_set("input_boolean.focus_mode", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert hass.states.get("input_boolean.bedroom_focus_override_active").state == "on"
+    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
+
+    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("input_boolean.focus_mode").state == "off"
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "on"
+    assert hass.states.get("input_boolean.bedroom_focus_override_active").state == "off"
+
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "on"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "off"
+    assert hass.states.get("input_boolean.bedroom_focus_override_active").state == "off"
+    assert adaptive_lighting_calls
+    assert adaptive_lighting_calls[-1].data["turn_on_lights"] is False
