@@ -125,6 +125,41 @@ async def test_sleep_end_restores_main_al_and_reapplies_it_when_saved_on(
     assert adaptive_lighting_calls[0].data["turn_on_lights"] is False
 
 
+async def test_sleep_end_turns_lights_on_when_room_is_already_active_and_dark(
+    hass,
+    sleep_mode_lighting_config,
+    switch_service_calls,
+    input_boolean_service_calls,
+    light_service_calls,
+    adaptive_lighting_calls,
+) -> None:
+    """Sleep exit should catch up when motion stayed on while auto-on was blocked."""
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "on")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
+    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
+    await hass.async_block_till_done()
+
+    assert await async_setup_component(hass, "automation", sleep_mode_lighting_config)
+
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    await hass.async_block_till_done()
+
+    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "on"
+    assert hass.states.get("input_boolean.bedroom_sleep_override_active").state == "off"
+    assert len(adaptive_lighting_calls) == 2
+    assert adaptive_lighting_calls[0].data["turn_on_lights"] is False
+    assert adaptive_lighting_calls[1].data["turn_on_lights"] is True
+    assert adaptive_lighting_calls[1].data["transition"] == 1
+
+
 async def test_sleep_end_keeps_main_al_off_when_saved_off(
     hass,
     sleep_mode_lighting_config,
