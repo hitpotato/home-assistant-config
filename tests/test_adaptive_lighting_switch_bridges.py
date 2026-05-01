@@ -107,6 +107,44 @@ async def test_turning_main_switch_on_clears_manual_control_and_reapplies_al(
     assert hass.states.get("light.bedroom_lights").state == "off"
 
 
+async def test_main_switch_attribute_refresh_does_not_reapply_al(
+    hass,
+    adaptive_lighting_resume_bridge_config,
+    adaptive_lighting_calls,
+    adaptive_lighting_set_manual_control_calls,
+) -> None:
+    """Entity refreshes should not look like the user toggled AL back on."""
+
+    assert await async_setup_component(
+        hass,
+        "automation",
+        adaptive_lighting_resume_bridge_config,
+    )
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    hass.states.async_set(
+        "switch.adaptive_lighting_adaptive_lighting",
+        "on",
+        {"refresh_count": 1},
+    )
+    await hass.async_block_till_done()
+
+    hass.states.async_set(
+        "switch.adaptive_lighting_adaptive_lighting",
+        "on",
+        {"refresh_count": 2},
+    )
+    await hass.async_block_till_done()
+
+    assert adaptive_lighting_set_manual_control_calls == []
+    assert adaptive_lighting_calls == []
+
+
 async def test_turning_main_switch_on_during_sleep_saves_restore_on_but_keeps_al_disabled(
     hass,
     adaptive_lighting_resume_bridge_config,
@@ -141,6 +179,49 @@ async def test_turning_main_switch_on_during_sleep_saves_restore_on_but_keeps_al
     assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
     assert input_boolean_service_calls[-1].service == "turn_on"
     assert switch_service_calls[-1].service == "turn_off"
+
+
+async def test_main_switch_refresh_during_sleep_preserves_restore_state(
+    hass,
+    adaptive_lighting_resume_bridge_config,
+    adaptive_lighting_calls,
+    adaptive_lighting_set_manual_control_calls,
+    input_boolean_service_calls,
+    switch_service_calls,
+) -> None:
+    """Sleep should ignore same-state AL refreshes and keep the queued restore state."""
+
+    assert await async_setup_component(
+        hass,
+        "automation",
+        adaptive_lighting_resume_bridge_config,
+    )
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_override_restore_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "on")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
+    hass.states.async_set(
+        "switch.adaptive_lighting_adaptive_lighting",
+        "off",
+        {"refresh_count": 1},
+    )
+    await hass.async_block_till_done()
+
+    hass.states.async_set(
+        "switch.adaptive_lighting_adaptive_lighting",
+        "off",
+        {"refresh_count": 2},
+    )
+    await hass.async_block_till_done()
+
+    assert adaptive_lighting_set_manual_control_calls == []
+    assert adaptive_lighting_calls == []
+    assert input_boolean_service_calls == []
+    assert switch_service_calls == []
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
 
 
 async def test_turning_main_switch_on_during_focus_saves_restore_on_but_keeps_al_disabled(
