@@ -149,6 +149,12 @@
   triggers:
   - trigger: state
     entity_id: switch.adaptive_lighting_adaptive_lighting
+    from: 'off'
+    to: 'on'
+  - trigger: state
+    entity_id: switch.adaptive_lighting_adaptive_lighting
+    from: 'on'
+    to: 'off'
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
