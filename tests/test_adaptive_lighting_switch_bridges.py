@@ -107,14 +107,15 @@ async def test_turning_main_switch_on_clears_manual_control_and_reapplies_al(
     assert hass.states.get("light.bedroom_lights").state == "off"
 
 
-async def test_turning_main_switch_on_during_sleep_does_not_reapply_al(
+async def test_turning_main_switch_on_during_sleep_saves_restore_on_but_keeps_al_disabled(
     hass,
     adaptive_lighting_resume_bridge_config,
     adaptive_lighting_calls,
     adaptive_lighting_set_manual_control_calls,
     input_boolean_service_calls,
+    switch_service_calls,
 ) -> None:
-    """Sleep mode should keep control while switch changes only rewrite restore state."""
+    """Sleep should save restore-on intent without letting AL take live ownership."""
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "on")
@@ -133,23 +134,24 @@ async def test_turning_main_switch_on_during_sleep_does_not_reapply_al(
 
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
     await hass.async_block_till_done()
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
-    await hass.async_block_till_done()
 
     assert adaptive_lighting_set_manual_control_calls == []
     assert adaptive_lighting_calls == []
-    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "off"
-    assert [call.service for call in input_boolean_service_calls[-2:]] == ["turn_on", "turn_off"]
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
+    assert input_boolean_service_calls[-1].service == "turn_on"
+    assert switch_service_calls[-1].service == "turn_off"
 
 
-async def test_turning_main_switch_on_during_focus_does_not_reapply_al(
+async def test_turning_main_switch_on_during_focus_saves_restore_on_but_keeps_al_disabled(
     hass,
     adaptive_lighting_resume_bridge_config,
     adaptive_lighting_calls,
     adaptive_lighting_set_manual_control_calls,
     input_boolean_service_calls,
+    switch_service_calls,
 ) -> None:
-    """Focus mode should keep control while switch changes only rewrite restore state."""
+    """Focus should save restore-on intent without letting AL take live ownership."""
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
@@ -168,13 +170,13 @@ async def test_turning_main_switch_on_during_focus_does_not_reapply_al(
 
     hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
     await hass.async_block_till_done()
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
-    await hass.async_block_till_done()
 
     assert adaptive_lighting_set_manual_control_calls == []
     assert adaptive_lighting_calls == []
-    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "off"
-    assert [call.service for call in input_boolean_service_calls[-2:]] == ["turn_on", "turn_off"]
+    assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "on"
+    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "off"
+    assert input_boolean_service_calls[-1].service == "turn_on"
+    assert switch_service_calls[-1].service == "turn_off"
 
 
 async def test_manual_control_event_during_sleep_does_not_rewrite_restore_state(

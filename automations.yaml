@@ -175,6 +175,9 @@
         - action: input_boolean.turn_on
           target:
             entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
+        - action: switch.turn_off
+          target:
+            entity_id: switch.adaptive_lighting_adaptive_lighting
         else:
         - action: input_boolean.turn_off
           target:
