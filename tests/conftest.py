@@ -111,6 +111,15 @@ def adaptive_lighting_resume_bridge_config(
 
 
 @pytest.fixture
+def adaptive_lighting_lux_brightness_restore_config(
+    automations_yaml: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Extract the tracked restart restore automation for lux-based AL settings."""
+    automation = find_automation_by_id(automations_yaml, "1775000000003")
+    return {"automation": [automation]}
+
+
+@pytest.fixture
 def sleep_mode_lighting_config(
     automations_yaml: list[dict[str, Any]],
 ) -> dict[str, Any]:
@@ -190,6 +199,24 @@ def adaptive_lighting_set_manual_control_calls(
     hass.services.async_register(
         "adaptive_lighting",
         "set_manual_control",
+        handle_service,
+    )
+    return calls
+
+
+@pytest.fixture(autouse=True)
+def adaptive_lighting_change_switch_settings_calls(
+    hass: HomeAssistant,
+) -> list[ServiceCall]:
+    """Capture Adaptive Lighting runtime setting changes during tests."""
+    calls: list[ServiceCall] = []
+
+    async def handle_service(call: ServiceCall) -> None:
+        calls.append(call)
+
+    hass.services.async_register(
+        "adaptive_lighting",
+        "change_switch_settings",
         handle_service,
     )
     return calls
