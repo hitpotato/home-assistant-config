@@ -71,6 +71,12 @@
     id: motion_trigger
   - trigger: state
     entity_id:
+    - binary_sensor.myggbett_door_window_sensor_door
+    from: 'off'
+    to: 'on'
+    id: door_open
+  - trigger: state
+    entity_id:
     - light.bedroom_lights
     from: 'off'
     to: 'on'
@@ -106,6 +112,22 @@
           use_defaults: current
           min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
           max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+      - action: adaptive_lighting.apply
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          lights: light.bedroom_lights
+          turn_on_lights: true
+          transition: 1
+    - conditions:
+      - condition: trigger
+        id: door_open
+      - condition: state
+        entity_id: light.bedroom_lights
+        state: 'off'
+      - condition: numeric_state
+        entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
+        below: 10
+      sequence:
       - action: adaptive_lighting.apply
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -273,6 +295,11 @@
     entity_id: binary_sensor.bedroom_activity
     to: 'on'
     id: activity_on
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.bedroom_occupancy_hold
+    id: hold_timer_finished
   - trigger: state
     entity_id: media_player.sony_xr_65a95l_2
     id: tv_changed
@@ -299,6 +326,41 @@
           entity_id: timer.bedroom_occupancy_hold
         data:
           duration: '00:50:00'
+    - conditions:
+      - condition: trigger
+        id: hold_timer_finished
+      - condition: state
+        entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+        state: 'on'
+      sequence:
+      - action: timer.start
+        target:
+          entity_id: timer.bedroom_occupancy_hold
+        data:
+          duration: '00:50:00'
+      - if:
+        - condition: state
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          state: 'on'
+        - condition: state
+          entity_id: input_boolean.sleeping_mode
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.focus_mode
+          state: 'off'
+        - condition: state
+          entity_id: light.bedroom_lights
+          state: 'off'
+        - condition: numeric_state
+          entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
+          below: 10
+        then:
+        - action: adaptive_lighting.apply
+          data:
+            entity_id: switch.adaptive_lighting_adaptive_lighting
+            lights: light.bedroom_lights
+            turn_on_lights: true
+            transition: 1
     - conditions:
       - condition: trigger
         id: tv_changed

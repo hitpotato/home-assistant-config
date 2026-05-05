@@ -3,6 +3,16 @@ from __future__ import annotations
 from homeassistant.setup import async_setup_component
 
 
+def _fire_hold_timer_finished(hass) -> None:
+    """Fire the same event Home Assistant emits when the hold timer completes."""
+    hass.bus.async_fire(
+        "timer.finished",
+        {
+            "entity_id": "timer.bedroom_occupancy_hold",
+        },
+    )
+
+
 async def test_grillplats_plug_keeps_bedroom_occupied(
     hass,
     bedroom_timer_config,
@@ -109,6 +119,89 @@ async def test_reenabling_automations_with_light_on_restarts_hold_timer(
     await hass.async_block_till_done()
 
     assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
+
+
+async def test_hold_timer_finished_restarts_when_raw_motion_is_still_on(
+    hass,
+    bedroom_timer_config,
+    bedroom_hold_timer_automation_config,
+    adaptive_lighting_calls,
+) -> None:
+    """The 50-minute check should keep the hold alive if motion is still present."""
+
+    assert await async_setup_component(hass, "timer", bedroom_timer_config)
+    assert await async_setup_component(
+        hass, "automation", bedroom_hold_timer_automation_config
+    )
+    await hass.async_block_till_done()
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
+    hass.states.async_set("light.bedroom_lights", "on")
+    await hass.async_block_till_done()
+
+    _fire_hold_timer_finished(hass)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
+    assert adaptive_lighting_calls == []
+
+
+async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_present(
+    hass,
+    bedroom_timer_config,
+    bedroom_hold_timer_automation_config,
+    adaptive_lighting_calls,
+) -> None:
+    """If lights somehow turned off, the 50-minute motion check should recover them."""
+
+    assert await async_setup_component(hass, "timer", bedroom_timer_config)
+    assert await async_setup_component(
+        hass, "automation", bedroom_hold_timer_automation_config
+    )
+    await hass.async_block_till_done()
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
+    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
+    await hass.async_block_till_done()
+
+    _fire_hold_timer_finished(hass)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
+    assert len(adaptive_lighting_calls) == 1
+    assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
+    assert adaptive_lighting_calls[0].data["turn_on_lights"] is True
+
+
+async def test_hold_timer_finished_does_not_restart_when_raw_motion_is_off(
+    hass,
+    bedroom_timer_config,
+    bedroom_hold_timer_automation_config,
+    adaptive_lighting_calls,
+) -> None:
+    """If no motion remains at the 50-minute check, normal vacancy can proceed."""
+
+    assert await async_setup_component(hass, "timer", bedroom_timer_config)
+    assert await async_setup_component(
+        hass, "automation", bedroom_hold_timer_automation_config
+    )
+    await hass.async_block_till_done()
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "off")
+    await hass.async_block_till_done()
+
+    _fire_hold_timer_finished(hass)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("timer.bedroom_occupancy_hold").state == "idle"
+    assert adaptive_lighting_calls == []
 
 
 async def test_reenabling_automations_with_light_off_keeps_hold_timer_idle(

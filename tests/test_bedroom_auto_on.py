@@ -72,6 +72,80 @@ async def test_sleeping_mode_blocks_bedroom_auto_on(
     assert adaptive_lighting_calls == []
 
 
+async def test_door_open_in_dark_room_turns_on_bedroom_light(
+    hass,
+    bedroom_auto_on_config,
+    adaptive_lighting_calls,
+) -> None:
+    """Opening the bedroom door should recover lights when motion is slow."""
+
+    assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
+    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "off")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
+    await hass.async_block_till_done()
+
+    assert len(adaptive_lighting_calls) == 1
+    assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
+    assert adaptive_lighting_calls[0].data["turn_on_lights"] is True
+
+
+async def test_door_open_auto_on_is_blocked_during_sleep(
+    hass,
+    bedroom_auto_on_config,
+    adaptive_lighting_calls,
+) -> None:
+    """Door-open recovery should not steal lighting ownership from Sleep."""
+
+    assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "on")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
+    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "off")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
+    await hass.async_block_till_done()
+
+    assert adaptive_lighting_calls == []
+
+
+async def test_main_adaptive_lighting_switch_blocks_door_open_auto_on(
+    hass,
+    bedroom_auto_on_config,
+    adaptive_lighting_calls,
+) -> None:
+    """Door-open recovery should respect the main Adaptive Lighting opt-out."""
+
+    assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
+    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "off")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
+    await hass.async_block_till_done()
+
+    assert adaptive_lighting_calls == []
+
+
 async def test_manual_light_on_in_dark_room_applies_adaptive_lighting(
     hass,
     bedroom_auto_on_config,
