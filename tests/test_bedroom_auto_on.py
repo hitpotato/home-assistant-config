@@ -76,6 +76,7 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
     hass,
     bedroom_auto_on_config,
     adaptive_lighting_calls,
+    adaptive_lighting_change_switch_settings_calls,
 ) -> None:
     """Opening the bedroom door should recover lights when motion is slow."""
 
@@ -92,6 +93,10 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
 
     hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
     await hass.async_block_till_done()
+
+    assert len(adaptive_lighting_change_switch_settings_calls) == 1
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 35
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 100
 
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
@@ -198,7 +203,9 @@ async def test_restart_reapplies_lux_brightness_settings(
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("light.bedroom_lights", "on")
-    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "50")
+    # In this room, 49 lx can already mean "all bedroom lights are bright".
+    # Keep that calibrated reading in the low-brightness bucket.
+    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "49")
     await hass.async_block_till_done()
 
     await hass.services.async_call(
@@ -213,8 +220,8 @@ async def test_restart_reapplies_lux_brightness_settings(
     await hass.async_block_till_done()
 
     assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 15
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 65
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 5
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 45
 
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"

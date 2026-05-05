@@ -152,6 +152,7 @@ async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_presen
     bedroom_timer_config,
     bedroom_hold_timer_automation_config,
     adaptive_lighting_calls,
+    adaptive_lighting_change_switch_settings_calls,
 ) -> None:
     """If lights somehow turned off, the 50-minute motion check should recover them."""
 
@@ -174,6 +175,15 @@ async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_presen
     await hass.async_block_till_done()
 
     assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
+    assert len(adaptive_lighting_change_switch_settings_calls) == 1
+    assert (
+        adaptive_lighting_change_switch_settings_calls[0].data["entity_id"]
+        == "switch.adaptive_lighting_adaptive_lighting"
+    )
+    assert adaptive_lighting_change_switch_settings_calls[0].data["use_defaults"] == "current"
+    assert adaptive_lighting_change_switch_settings_calls[0].data["min_brightness"] == 35
+    assert adaptive_lighting_change_switch_settings_calls[0].data["max_brightness"] == 100
+
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
     assert adaptive_lighting_calls[0].data["turn_on_lights"] is True

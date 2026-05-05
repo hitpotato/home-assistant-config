@@ -110,8 +110,8 @@
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
           use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
       - action: adaptive_lighting.apply
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -128,6 +128,12 @@
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
         below: 10
       sequence:
+      - action: adaptive_lighting.change_switch_settings
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          use_defaults: current
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
       - action: adaptive_lighting.apply
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -145,8 +151,8 @@
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
           use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
       - action: adaptive_lighting.apply
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -237,8 +243,8 @@
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
           use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
       - action: adaptive_lighting.set_manual_control
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -273,8 +279,8 @@
     data:
       entity_id: switch.adaptive_lighting_adaptive_lighting
       use_defaults: current
-      min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
-      max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+      min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+      max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
   - if:
     - condition: state
       entity_id: light.bedroom_lights
@@ -355,6 +361,12 @@
           entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
           below: 10
         then:
+        - action: adaptive_lighting.change_switch_settings
+          data:
+            entity_id: switch.adaptive_lighting_adaptive_lighting
+            use_defaults: current
+            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
         - action: adaptive_lighting.apply
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -664,8 +676,8 @@
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
             use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
         - action: adaptive_lighting.apply
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -700,8 +712,8 @@
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
             use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
         - action: adaptive_lighting.apply
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -797,8 +809,8 @@
               data:
                 entity_id: switch.adaptive_lighting_adaptive_lighting
                 use_defaults: current
-                min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 75 %}15{% else %}5{% endif %}"
-                max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 75 %}65{% else %}45{% endif %}"
+                min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 5 %}45{% elif lux < 10 %}35{% elif lux < 25 %}25{% elif lux < 40 %}15{% else %}5{% endif %}"
+                max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% if lux < 10 %}100{% elif lux < 25 %}85{% elif lux < 40 %}65{% else %}45{% endif %}"
             - action: adaptive_lighting.apply
               data:
                 entity_id: switch.adaptive_lighting_adaptive_lighting
