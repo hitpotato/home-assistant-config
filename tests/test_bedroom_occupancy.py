@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from homeassistant.setup import async_setup_component
 
 
@@ -147,6 +149,7 @@ async def test_hold_timer_finished_restarts_when_raw_motion_is_still_on(
     assert adaptive_lighting_calls == []
 
 
+@pytest.mark.freeze_time("2026-05-05 18:30:00-07:00")
 async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_present(
     hass,
     bedroom_timer_config,
@@ -181,7 +184,7 @@ async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_presen
         == "switch.adaptive_lighting_adaptive_lighting"
     )
     assert adaptive_lighting_change_switch_settings_calls[0].data["use_defaults"] == "current"
-    assert adaptive_lighting_change_switch_settings_calls[0].data["min_brightness"] == 35
+    assert adaptive_lighting_change_switch_settings_calls[0].data["min_brightness"] == 100
     assert adaptive_lighting_change_switch_settings_calls[0].data["max_brightness"] == 100
 
     assert len(adaptive_lighting_calls) == 1
