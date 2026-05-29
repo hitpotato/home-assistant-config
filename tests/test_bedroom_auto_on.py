@@ -99,8 +99,8 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
     await hass.async_block_till_done()
 
     assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 15
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 25
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 25
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 35
 
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
@@ -226,8 +226,8 @@ async def test_restart_reapplies_lux_brightness_settings(
     await hass.async_block_till_done()
 
     assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 5
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 10
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 15
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 20
 
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"

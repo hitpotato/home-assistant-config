@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_f869ecc3bc9da184
-    entity_id: masked_entity_679cd7484728f7c3
+    device_id: masked_device_60cf7f100407bb3c
+    entity_id: masked_entity_6b0afa445b42d9bd
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_0e55bf9c9a622ba1
+  - action: notify.mobile_app_public_phone_803688db72c472d9
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_f869ecc3bc9da184
-    entity_id: masked_entity_fe6758335363ab2f
+    device_id: masked_device_60cf7f100407bb3c
+    entity_id: masked_entity_11cc670cee11b031
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_0e55bf9c9a622ba1
+  - action: notify.mobile_app_public_phone_803688db72c472d9
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -110,8 +110,8 @@
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
           use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
       - action: adaptive_lighting.apply
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -132,8 +132,8 @@
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
           use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
       - action: adaptive_lighting.apply
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -151,8 +151,8 @@
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
           use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
       - action: adaptive_lighting.apply
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -243,8 +243,8 @@
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
           use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
       - action: adaptive_lighting.set_manual_control
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -279,8 +279,8 @@
     data:
       entity_id: switch.adaptive_lighting_adaptive_lighting
       use_defaults: current
-      min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-      max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+      min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+      max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
   - if:
     - condition: state
       entity_id: light.bedroom_lights
@@ -365,8 +365,8 @@
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
             use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
         - action: adaptive_lighting.apply
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -676,8 +676,8 @@
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
             use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
         - action: adaptive_lighting.apply
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -712,8 +712,8 @@
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
             use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
         - action: adaptive_lighting.apply
           data:
             entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -809,8 +809,8 @@
               data:
                 entity_id: switch.adaptive_lighting_adaptive_lighting
                 use_defaults: current
-                min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}15{% elif lux < 25 %}10{% else %}5{% endif %}"
-                max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}10{% endif %}"
+                min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+                max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
             - action: adaptive_lighting.apply
               data:
                 entity_id: switch.adaptive_lighting_adaptive_lighting
