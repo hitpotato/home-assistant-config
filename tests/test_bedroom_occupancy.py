@@ -87,7 +87,7 @@ async def test_closed_door_and_active_hold_timer_keep_bedroom_occupied(
         "start",
         {
             "entity_id": "timer.bedroom_occupancy_hold",
-            "duration": "00:50:00",
+            "duration": "01:30:00",
         },
         blocking=True,
     )
