@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_60cf7f100407bb3c
-    entity_id: masked_entity_6b0afa445b42d9bd
+    device_id: masked_device_4888ce591401c6d7
+    entity_id: masked_entity_ca6bfdd1f6fecebb
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_803688db72c472d9
+  - action: notify.mobile_app_public_phone_e5515504fb4c6701
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_60cf7f100407bb3c
-    entity_id: masked_entity_11cc670cee11b031
+    device_id: masked_device_4888ce591401c6d7
+    entity_id: masked_entity_a1ad44c116d7d2f9
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_803688db72c472d9
+  - action: notify.mobile_app_public_phone_e5515504fb4c6701
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -81,6 +81,12 @@
     from: 'off'
     to: 'on'
     id: manual_on
+  - trigger: time
+    at: '13:00:00'
+    id: schedule_update
+  - trigger: time
+    at: '18:00:00'
+    id: schedule_update
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
@@ -96,6 +102,25 @@
     state: 'off'
   actions:
   - choose:
+    - conditions:
+      - condition: trigger
+        id: schedule_update
+      - condition: state
+        entity_id: light.bedroom_lights
+        state: 'on'
+      sequence:
+      - action: adaptive_lighting.change_switch_settings
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          use_defaults: current
+          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
+          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
+      - action: adaptive_lighting.apply
+        data:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
+          lights: light.bedroom_lights
+          turn_on_lights: true
+          transition: 10
     - conditions:
       - condition: trigger
         id: motion_trigger
@@ -331,7 +356,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:50:00'
+          duration: '01:30:00'
     - conditions:
       - condition: trigger
         id: hold_timer_finished
@@ -343,7 +368,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:50:00'
+          duration: '01:30:00'
       - if:
         - condition: state
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -390,7 +415,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:50:00'
+          duration: '01:30:00'
     - conditions:
       - condition: trigger
         id: plug_changed
@@ -408,7 +433,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:50:00'
+          duration: '01:30:00'
     - conditions:
       - condition: trigger
         id: automations_reenabled
@@ -420,7 +445,7 @@
         target:
           entity_id: timer.bedroom_occupancy_hold
         data:
-          duration: '00:50:00'
+          duration: '01:30:00'
   mode: restart
 - id: '1773026091419'
   alias: "Bedroom: Safe Auto-Off When Vacant"

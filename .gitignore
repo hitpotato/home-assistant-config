@@ -9,3 +9,4 @@ PLAN.md
 
 # Local real Home Assistant config
 .local/
+.gstack/
