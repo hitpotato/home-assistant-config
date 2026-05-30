@@ -40,7 +40,5 @@ template:
           {{ is_state('binary_sensor.bedroom_activity', 'on')
              or states('media_player.sony_xr_65a95l_2') not in ['off', 'unavailable', 'idle']
              or is_state('switch.grillplats_plug', 'on')
-             or (
-               is_state('binary_sensor.myggbett_door_window_sensor_door', 'off')
-               and is_state('timer.bedroom_occupancy_hold', 'active')
-             ) }}
+             or is_state('timer.bedroom_occupancy_hold', 'active')
+          }}
