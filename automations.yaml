@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_4888ce591401c6d7
-    entity_id: masked_entity_ca6bfdd1f6fecebb
+    device_id: masked_device_0c3e2e1322db7440
+    entity_id: masked_entity_5c0b5a07f2837028
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_e5515504fb4c6701
+  - action: notify.mobile_app_public_phone_8f67b389227069aa
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_4888ce591401c6d7
-    entity_id: masked_entity_a1ad44c116d7d2f9
+    device_id: masked_device_0c3e2e1322db7440
+    entity_id: masked_entity_27860b109af6fa85
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_e5515504fb4c6701
+  - action: notify.mobile_app_public_phone_8f67b389227069aa
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')

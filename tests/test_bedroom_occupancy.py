@@ -64,12 +64,12 @@ async def test_all_inactive_signals_clear_bedroom_occupancy(
     assert hass.states.get("binary_sensor.bedroom_occupancy").state == "off"
 
 
-async def test_closed_door_and_active_hold_timer_keep_bedroom_occupied(
+async def test_active_hold_timer_keeps_bedroom_occupied(
     hass,
     bedroom_timer_config,
     bedroom_template_config,
 ) -> None:
-    """Keep bedroom occupancy on while the hold timer is active and the door is closed."""
+    """Keep bedroom occupancy on while the hold timer is active regardless of door state."""
 
     assert await async_setup_component(hass, "timer", bedroom_timer_config)
     assert await async_setup_component(hass, "template", bedroom_template_config)
@@ -79,7 +79,8 @@ async def test_closed_door_and_active_hold_timer_keep_bedroom_occupied(
     hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "off")
     hass.states.async_set("media_player.sony_xr_65a95l_2", "off")
     hass.states.async_set("switch.grillplats_plug", "off")
-    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "off")
+    # Door is open
+    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
     await hass.async_block_till_done()
 
     await hass.services.async_call(
