@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_0c3e2e1322db7440
-    entity_id: masked_entity_5c0b5a07f2837028
+    device_id: masked_device_7752170e4001d3a6
+    entity_id: masked_entity_87f9d431cf62bf62
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_8f67b389227069aa
+  - action: notify.mobile_app_public_phone_ff09abc0e808f554
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_0c3e2e1322db7440
-    entity_id: masked_entity_27860b109af6fa85
+    device_id: masked_device_7752170e4001d3a6
+    entity_id: masked_entity_ce489eda3871d6da
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_8f67b389227069aa
+  - action: notify.mobile_app_public_phone_ff09abc0e808f554
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -479,6 +479,9 @@
       entity_id: light.bedroom_lights
     data:
       transition: 5
+  - action: switch.turn_on
+    target:
+      entity_id: switch.adaptive_lighting_adaptive_lighting
   mode: restart
 - id: '1773030487845'
   alias: "Bedroom: Late-Night Dim Light Mode"
@@ -850,28 +853,3 @@
           target:
             entity_id: input_boolean.bedroom_focus_override_active
   mode: restart
-- id: '1775000000004'
-  alias: "Bedroom: Reset Adaptive Lighting on Lights Off"
-  description: Clears manual AL overrides when the lights turn off, ensuring the next session starts fresh.
-  triggers:
-  - trigger: state
-    entity_id: light.bedroom_lights
-    to: 'off'
-  conditions:
-  - condition: state
-    entity_id: input_boolean.automations_enabled
-    state: 'on'
-  - condition: state
-    entity_id: switch.adaptive_lighting_adaptive_lighting
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.sleeping_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.focus_mode
-    state: 'off'
-  actions:
-  - action: switch.turn_on
-    target:
-      entity_id: switch.adaptive_lighting_adaptive_lighting
-  mode: single
