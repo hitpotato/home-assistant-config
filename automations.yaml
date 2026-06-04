@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_7752170e4001d3a6
-    entity_id: masked_entity_87f9d431cf62bf62
+    device_id: masked_device_2f31c9a95c0113d8
+    entity_id: masked_entity_111e5f1c2b4f77c7
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_ff09abc0e808f554
+  - action: notify.mobile_app_public_phone_f14f541525f870a6
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_7752170e4001d3a6
-    entity_id: masked_entity_ce489eda3871d6da
+    device_id: masked_device_2f31c9a95c0113d8
+    entity_id: masked_entity_2830b4cb1674ed64
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_ff09abc0e808f554
+  - action: notify.mobile_app_public_phone_f14f541525f870a6
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -504,27 +504,36 @@
     entity_id: light.bedroom_lights
     state: 'off'
   actions:
-  - action: light.turn_on
-    target:
-      entity_id: light.window_light
-    data:
-      brightness_pct: 5
-      color_temp_kelvin: 2500
-      transition: 2
-  - wait_for_trigger:
-    - trigger: state
-      entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
-      to: 'off'
-      for:
-        seconds: 2
-    timeout: 00:00:50
-    continue_on_timeout: true
-  - action: light.turn_off
-    target:
-      entity_id: light.window_light
-    data:
-      transition: 2
-  - delay: 00:00:04
+  - repeat:
+      while:
+      - condition: state
+        entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.sleeping_mode
+        state: 'on'
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.window_light
+        data:
+          brightness: 1
+          color_temp_kelvin: 2200
+          transition: 2
+      - wait_for_trigger:
+        - trigger: state
+          entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+          to: 'off'
+          for:
+            seconds: 2
+        timeout: 00:00:50
+        continue_on_timeout: true
+      - action: light.turn_off
+        target:
+          entity_id: light.window_light
+        data:
+          transition: 2
+      - delay: 00:00:04
   - action: adaptive_lighting.apply
     data:
       entity_id: switch.adaptive_lighting_adaptive_lighting
