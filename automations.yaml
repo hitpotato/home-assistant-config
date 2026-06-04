@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_2f31c9a95c0113d8
-    entity_id: masked_entity_111e5f1c2b4f77c7
+    device_id: masked_device_5116179fddaf4134
+    entity_id: masked_entity_523969edef8378c0
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_f14f541525f870a6
+  - action: notify.mobile_app_public_phone_4113a9088014b2c9
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_2f31c9a95c0113d8
-    entity_id: masked_entity_2830b4cb1674ed64
+    device_id: masked_device_5116179fddaf4134
+    entity_id: masked_entity_9afd29c441c707a9
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_f14f541525f870a6
+  - action: notify.mobile_app_public_phone_4113a9088014b2c9
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -208,6 +208,35 @@
     target:
       entity_id: switch.adaptive_lighting_adaptive_lighting
   mode: restart
+- id: '1775000000004'
+  alias: "Bedroom: Manual Lights Off Disables Auto-On"
+  description: >-
+    When the user manually turns off all bedroom lights while still in the room,
+    disable the AL switch so motion does not override their choice.
+    The AL switch resets back to on when the room becomes vacant (Safe Auto-Off).
+  triggers:
+  - trigger: state
+    entity_id: light.bedroom_lights
+    from: 'on'
+    to: 'off'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.bedroom_occupancy
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.sleeping_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.focus_mode
+    state: 'off'
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.adaptive_lighting_adaptive_lighting
+  mode: single
 - id: '1775000000002'
   alias: "Bedroom: Adaptive Lighting Immediate Resume"
   description: Reapplies normal Adaptive Lighting in normal mode, or rewrites the saved restore state during temporary overrides.
