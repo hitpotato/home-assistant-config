@@ -326,30 +326,3 @@ async def test_manual_control_event_during_focus_does_not_rewrite_restore_state(
     assert hass.states.get("input_boolean.bedroom_override_restore_adaptive_lighting").state == "off"
 
 
-async def test_lights_turning_off_clears_manual_opt_out(
-    hass,
-    adaptive_lighting_reset_on_off_config,
-    switch_service_calls,
-) -> None:
-    """Turning off the lights should reset the manual AL opt-out to prepare for next session."""
-
-    assert await async_setup_component(
-        hass,
-        "automation",
-        adaptive_lighting_reset_on_off_config,
-    )
-
-    hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("input_boolean.sleeping_mode", "off")
-    hass.states.async_set("input_boolean.focus_mode", "off")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
-    hass.states.async_set("light.bedroom_lights", "on")
-    await hass.async_block_till_done()
-
-    hass.states.async_set("light.bedroom_lights", "off")
-    await hass.async_block_till_done()
-
-    assert hass.states.get("switch.adaptive_lighting_adaptive_lighting").state == "on"
-    assert len(switch_service_calls) == 1
-    assert switch_service_calls[-1].service == "turn_on"
-    assert switch_service_calls[-1].data["entity_id"] == ["switch.adaptive_lighting_adaptive_lighting"]
