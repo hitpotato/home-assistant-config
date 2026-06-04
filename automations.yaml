@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_5116179fddaf4134
-    entity_id: masked_entity_523969edef8378c0
+    device_id: masked_device_50a08114fd979d96
+    entity_id: masked_entity_3887a8eea28c52be
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_4113a9088014b2c9
+  - action: notify.mobile_app_public_phone_39099828f187058c
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_5116179fddaf4134
-    entity_id: masked_entity_9afd29c441c707a9
+    device_id: masked_device_50a08114fd979d96
+    entity_id: masked_entity_8abcc140a7a33661
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_4113a9088014b2c9
+  - action: notify.mobile_app_public_phone_39099828f187058c
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -124,9 +124,10 @@
     - conditions:
       - condition: trigger
         id: motion_trigger
-      - condition: state
-        entity_id: light.bedroom_lights
-        state: 'off'
+      - condition: template
+        value_template: >
+          {{ expand('light.bedroom_lights')
+             | selectattr('state', 'eq', 'on') | list | count == 0 }}
       - condition: numeric_state
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
         below: 10
@@ -146,9 +147,10 @@
     - conditions:
       - condition: trigger
         id: door_open
-      - condition: state
-        entity_id: light.bedroom_lights
-        state: 'off'
+      - condition: template
+        value_template: >
+          {{ expand('light.bedroom_lights')
+             | selectattr('state', 'eq', 'on') | list | count == 0 }}
       - condition: numeric_state
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
         below: 10
@@ -216,8 +218,11 @@
     The AL switch resets back to on when the room becomes vacant (Safe Auto-Off).
   triggers:
   - trigger: state
-    entity_id: light.bedroom_lights
-    from: 'on'
+    entity_id:
+    - light.tv_light
+    - light.bed_light
+    - light.window_light
+    - light.desk_light
     to: 'off'
   conditions:
   - condition: state
@@ -232,6 +237,10 @@
   - condition: state
     entity_id: input_boolean.focus_mode
     state: 'off'
+  - condition: template
+    value_template: >
+      {{ expand('light.bedroom_lights')
+         | selectattr('state', 'eq', 'on') | list | count == 0 }}
   actions:
   - action: switch.turn_off
     target:
@@ -408,9 +417,10 @@
         - condition: state
           entity_id: input_boolean.focus_mode
           state: 'off'
-        - condition: state
-          entity_id: light.bedroom_lights
-          state: 'off'
+        - condition: template
+          value_template: >
+            {{ expand('light.bedroom_lights')
+               | selectattr('state', 'eq', 'on') | list | count == 0 }}
         - condition: numeric_state
           entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
           below: 10
@@ -529,9 +539,10 @@
   - condition: state
     entity_id: input_boolean.focus_mode
     state: 'off'
-  - condition: state
-    entity_id: light.bedroom_lights
-    state: 'off'
+  - condition: template
+    value_template: >
+      {{ expand('light.bedroom_lights')
+         | selectattr('state', 'eq', 'on') | list | count == 0 }}
   actions:
   - repeat:
       while:
@@ -764,9 +775,10 @@
         - condition: state
           entity_id: input_boolean.focus_mode
           state: 'off'
-        - condition: state
-          entity_id: light.bedroom_lights
-          state: 'off'
+        - condition: template
+          value_template: >
+            {{ expand('light.bedroom_lights')
+               | selectattr('state', 'eq', 'on') | list | count == 0 }}
         - condition: state
           entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
           state: 'on'
