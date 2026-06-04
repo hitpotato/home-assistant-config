@@ -119,14 +119,6 @@ def adaptive_lighting_lux_brightness_restore_config(
     return {"automation": [automation]}
 
 
-@pytest.fixture
-def adaptive_lighting_reset_on_off_config(
-    automations_yaml: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Extract the tracked reset automation by id."""
-    automation = find_automation_by_id(automations_yaml, "1775000000004")
-    return {"automation": [automation]}
-
 
 @pytest.fixture
 def sleep_mode_lighting_config(
