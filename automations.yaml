@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_50a08114fd979d96
-    entity_id: masked_entity_3887a8eea28c52be
+    device_id: masked_device_9eafaa17b61888e2
+    entity_id: masked_entity_5b475589886f63bd
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_39099828f187058c
+  - action: notify.mobile_app_public_phone_1049cbd72d54972d
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_50a08114fd979d96
-    entity_id: masked_entity_8abcc140a7a33661
+    device_id: masked_device_9eafaa17b61888e2
+    entity_id: masked_entity_00b890db3d141b90
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_39099828f187058c
+  - action: notify.mobile_app_public_phone_1049cbd72d54972d
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -105,9 +105,10 @@
     - conditions:
       - condition: trigger
         id: schedule_update
-      - condition: state
-        entity_id: light.bedroom_lights
-        state: 'on'
+      - condition: template
+        value_template: >
+          {{ expand('light.bedroom_lights')
+             | selectattr('state', 'eq', 'on') | list | count > 0 }}
       sequence:
       - action: adaptive_lighting.change_switch_settings
         data:
@@ -345,9 +346,10 @@
       min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}5{% elif lux < 10 %}25{% elif lux < 25 %}20{% elif lux < 40 %}15{% else %}15{% endif %}"
       max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 13 %}10{% elif lux < 10 %}35{% elif lux < 25 %}30{% elif lux < 40 %}25{% else %}20{% endif %}"
   - if:
-    - condition: state
-      entity_id: light.bedroom_lights
-      state: 'on'
+    - condition: template
+      value_template: >
+        {{ expand('light.bedroom_lights')
+           | selectattr('state', 'eq', 'on') | list | count > 0 }}
     then:
     - action: adaptive_lighting.apply
       data:
@@ -476,9 +478,10 @@
     - conditions:
       - condition: trigger
         id: automations_reenabled
-      - condition: state
-        entity_id: light.bedroom_lights
-        state: 'on'
+      - condition: template
+        value_template: >
+          {{ expand('light.bedroom_lights')
+             | selectattr('state', 'eq', 'on') | list | count > 0 }}
       sequence:
       - action: timer.start
         target:
