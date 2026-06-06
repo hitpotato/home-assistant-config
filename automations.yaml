@@ -3,8 +3,8 @@
   description: ''
   triggers:
   - type: pm25
-    device_id: masked_device_9eafaa17b61888e2
-    entity_id: masked_entity_5b475589886f63bd
+    device_id: masked_device_34d9ad7ba3dc6e0f
+    entity_id: masked_entity_be50544c5bdd1d92
     domain: sensor
     trigger: device
     above: 40
@@ -17,7 +17,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_1049cbd72d54972d
+  - action: notify.mobile_app_public_phone_fada3dc533b4c1b3
     metadata: {}
     data:
       message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
@@ -34,8 +34,8 @@
   description: ''
   triggers:
   - type: carbon_dioxide
-    device_id: masked_device_9eafaa17b61888e2
-    entity_id: masked_entity_00b890db3d141b90
+    device_id: masked_device_34d9ad7ba3dc6e0f
+    entity_id: masked_entity_b906a1b66e71c77c
     domain: sensor
     trigger: device
     above: 1000
@@ -48,7 +48,7 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   actions:
-  - action: notify.mobile_app_public_phone_1049cbd72d54972d
+  - action: notify.mobile_app_public_phone_fada3dc533b4c1b3
     metadata: {}
     data:
       message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
@@ -92,9 +92,6 @@
     entity_id: input_boolean.automations_enabled
     state: 'on'
   - condition: state
-    entity_id: switch.adaptive_lighting_adaptive_lighting
-    state: 'on'
-  - condition: state
     entity_id: input_boolean.sleeping_mode
     state: 'off'
   - condition: state
@@ -105,6 +102,9 @@
     - conditions:
       - condition: trigger
         id: schedule_update
+      - condition: state
+        entity_id: switch.adaptive_lighting_adaptive_lighting
+        state: 'on'
       - condition: template
         value_template: >
           {{ expand('light.bedroom_lights')
@@ -133,6 +133,9 @@
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
         below: 10
       sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
       - action: adaptive_lighting.change_switch_settings
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -156,6 +159,9 @@
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
         below: 10
       sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.adaptive_lighting_adaptive_lighting
       - action: adaptive_lighting.change_switch_settings
         data:
           entity_id: switch.adaptive_lighting_adaptive_lighting
@@ -171,6 +177,9 @@
     - conditions:
       - condition: trigger
         id: manual_on
+      - condition: state
+        entity_id: switch.adaptive_lighting_adaptive_lighting
+        state: 'on'
       - condition: numeric_state
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
         below: 10

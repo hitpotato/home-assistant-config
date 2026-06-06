@@ -16,6 +16,7 @@ async def test_dark_motion_turns_on_bedroom_light(
     bedroom_auto_on_config,
     adaptive_lighting_calls,
     adaptive_lighting_change_switch_settings_calls,
+    switch_service_calls,
 ) -> None:
     """Turn on bedroom lights when motion happens in a dark room."""
 
@@ -81,6 +82,7 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
     bedroom_auto_on_config,
     adaptive_lighting_calls,
     adaptive_lighting_change_switch_settings_calls,
+    switch_service_calls,
 ) -> None:
     """Opening the bedroom door should recover lights when motion is slow."""
 
