@@ -45,8 +45,8 @@ async def test_dark_motion_turns_on_bedroom_light(
         == "switch.adaptive_lighting_adaptive_lighting"
     )
     assert adaptive_lighting_change_switch_settings_calls[0].data["use_defaults"] == "current"
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 5
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 10
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 40
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 55
 
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
@@ -103,8 +103,8 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
     await hass.async_block_till_done()
 
     assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 25
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 35
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 40
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 55
 
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
@@ -231,7 +231,7 @@ async def test_restart_reapplies_lux_brightness_settings(
 
     assert len(adaptive_lighting_change_switch_settings_calls) == 1
     assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 15
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 20
+    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 25
 
     assert len(adaptive_lighting_calls) == 1
     assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
