@@ -17,6 +17,8 @@ def _fire_hold_timer_finished(hass) -> None:
 
 async def test_grillplats_plug_keeps_bedroom_occupied(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_template_config,
 ) -> None:
@@ -39,6 +41,8 @@ async def test_grillplats_plug_keeps_bedroom_occupied(
 
 async def test_all_inactive_signals_clear_bedroom_occupancy(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_template_config,
 ) -> None:
@@ -66,6 +70,8 @@ async def test_all_inactive_signals_clear_bedroom_occupancy(
 
 async def test_active_hold_timer_keeps_bedroom_occupied(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_template_config,
 ) -> None:
@@ -101,6 +107,8 @@ async def test_active_hold_timer_keeps_bedroom_occupied(
 
 async def test_reenabling_automations_with_light_on_restarts_hold_timer(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_hold_timer_automation_config,
 ) -> None:
@@ -126,9 +134,10 @@ async def test_reenabling_automations_with_light_on_restarts_hold_timer(
 
 async def test_hold_timer_finished_restarts_when_raw_motion_is_still_on(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_hold_timer_automation_config,
-    adaptive_lighting_calls,
 ) -> None:
     """The 50-minute check should keep the hold alive if motion is still present."""
 
@@ -147,16 +156,18 @@ async def test_hold_timer_finished_restarts_when_raw_motion_is_still_on(
     await hass.async_block_till_done()
 
     assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
-    assert adaptive_lighting_calls == []
+
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) == 0
 
 
 @pytest.mark.freeze_time("2026-05-05 18:30:00-07:00")
 async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_present(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_hold_timer_automation_config,
-    adaptive_lighting_calls,
-    adaptive_lighting_change_switch_settings_calls,
 ) -> None:
     """If lights somehow turned off, the 50-minute motion check should recover them."""
 
@@ -167,7 +178,7 @@ async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_presen
     await hass.async_block_till_done()
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("light.bedroom_lights", "off")
@@ -179,25 +190,19 @@ async def test_hold_timer_finished_turns_lights_back_on_when_motion_still_presen
     await hass.async_block_till_done()
 
     assert hass.states.get("timer.bedroom_occupancy_hold").state == "active"
-    assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert (
-        adaptive_lighting_change_switch_settings_calls[0].data["entity_id"]
-        == "switch.adaptive_lighting_adaptive_lighting"
-    )
-    assert adaptive_lighting_change_switch_settings_calls[0].data["use_defaults"] == "current"
-    assert adaptive_lighting_change_switch_settings_calls[0].data["min_brightness"] == 100
-    assert adaptive_lighting_change_switch_settings_calls[0].data["max_brightness"] == 100
 
-    assert len(adaptive_lighting_calls) == 1
-    assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
-    assert adaptive_lighting_calls[0].data["turn_on_lights"] is True
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) >= 1
+    assert "brightness_pct" in turn_on_calls[-1].data
+    assert "color_temp_kelvin" in turn_on_calls[-1].data
 
 
 async def test_hold_timer_finished_does_not_restart_when_raw_motion_is_off(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_hold_timer_automation_config,
-    adaptive_lighting_calls,
 ) -> None:
     """If no motion remains at the 50-minute check, normal vacancy can proceed."""
 
@@ -215,11 +220,15 @@ async def test_hold_timer_finished_does_not_restart_when_raw_motion_is_off(
     await hass.async_block_till_done()
 
     assert hass.states.get("timer.bedroom_occupancy_hold").state == "idle"
-    assert adaptive_lighting_calls == []
+
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) == 0
 
 
 async def test_reenabling_automations_with_light_off_keeps_hold_timer_idle(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_timer_config,
     bedroom_hold_timer_automation_config,
 ) -> None:

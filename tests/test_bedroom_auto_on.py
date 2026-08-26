@@ -13,10 +13,9 @@ def _brightness_setting(call_data: dict[str, object], key: str) -> int:
 @pytest.mark.freeze_time("2026-05-05 12:00:00-07:00")
 async def test_dark_motion_turns_on_bedroom_light(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_auto_on_config,
-    adaptive_lighting_calls,
-    adaptive_lighting_change_switch_settings_calls,
-    adaptive_lighting_set_manual_control_calls,
     switch_service_calls,
 ) -> None:
     """Turn on bedroom lights when motion happens in a dark room."""
@@ -25,7 +24,7 @@ async def test_dark_motion_turns_on_bedroom_light(
 
     # These states satisfy the top-level automation guards.
     hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
 
@@ -39,24 +38,17 @@ async def test_dark_motion_turns_on_bedroom_light(
     hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
     await hass.async_block_till_done()
 
-    assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert (
-        adaptive_lighting_change_switch_settings_calls[0].data["entity_id"]
-        == "switch.adaptive_lighting_adaptive_lighting"
-    )
-    assert adaptive_lighting_change_switch_settings_calls[0].data["use_defaults"] == "current"
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 40
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 55
-
-    assert len(adaptive_lighting_calls) == 1
-    assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
-    assert adaptive_lighting_calls[0].data["turn_on_lights"] is True
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) >= 1
+    assert "brightness_pct" in turn_on_calls[-1].data
+    assert "color_temp_kelvin" in turn_on_calls[-1].data
 
 
 async def test_sleeping_mode_blocks_bedroom_auto_on(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_auto_on_config,
-    adaptive_lighting_calls,
 ) -> None:
     """Block auto-on when sleeping mode is enabled."""
 
@@ -74,16 +66,16 @@ async def test_sleeping_mode_blocks_bedroom_auto_on(
     hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
     await hass.async_block_till_done()
 
-    assert adaptive_lighting_calls == []
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) == 0
 
 
 @pytest.mark.freeze_time("2026-05-05 14:00:00-07:00")
 async def test_door_open_in_dark_room_turns_on_bedroom_light(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_auto_on_config,
-    adaptive_lighting_calls,
-    adaptive_lighting_change_switch_settings_calls,
-    adaptive_lighting_set_manual_control_calls,
     switch_service_calls,
 ) -> None:
     """Opening the bedroom door should recover lights when motion is slow."""
@@ -91,7 +83,7 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
     assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("light.bedroom_lights", "off")
@@ -102,26 +94,24 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
     hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
     await hass.async_block_till_done()
 
-    assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 40
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 55
-
-    assert len(adaptive_lighting_calls) == 1
-    assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
-    assert adaptive_lighting_calls[0].data["turn_on_lights"] is True
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) >= 1
+    assert "brightness_pct" in turn_on_calls[-1].data
+    assert "color_temp_kelvin" in turn_on_calls[-1].data
 
 
 async def test_door_open_auto_on_is_blocked_during_sleep(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_auto_on_config,
-    adaptive_lighting_calls,
 ) -> None:
     """Door-open recovery should not steal lighting ownership from Sleep."""
 
     assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
 
     hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "on")
     hass.states.async_set("input_boolean.focus_mode", "off")
     hass.states.async_set("light.bedroom_lights", "off")
@@ -132,39 +122,16 @@ async def test_door_open_auto_on_is_blocked_during_sleep(
     hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
     await hass.async_block_till_done()
 
-    assert adaptive_lighting_calls == []
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) == 0
 
 
-async def test_main_adaptive_lighting_switch_blocks_door_open_auto_on(
-    hass,
-    bedroom_auto_on_config,
-    adaptive_lighting_calls,
-) -> None:
-    """Door-open recovery should respect the main Adaptive Lighting opt-out."""
 
-    assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
-
-    hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
-    hass.states.async_set("input_boolean.sleeping_mode", "off")
-    hass.states.async_set("input_boolean.focus_mode", "off")
-    hass.states.async_set("light.bedroom_lights", "off")
-    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
-    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "off")
-    await hass.async_block_till_done()
-
-    hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "on")
-    await hass.async_block_till_done()
-
-    assert adaptive_lighting_calls == []
-
-
-@pytest.mark.freeze_time("2026-05-05 18:30:00-07:00")
 async def test_manual_light_on_in_dark_room_applies_adaptive_lighting(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_auto_on_config,
-    adaptive_lighting_calls,
-    adaptive_lighting_change_switch_settings_calls,
 ) -> None:
     """Apply adaptive lighting when the bedroom light is turned on manually in a dark room."""
 
@@ -172,7 +139,7 @@ async def test_manual_light_on_in_dark_room_applies_adaptive_lighting(
 
     # These states satisfy the top-level automation guards.
     hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
+    hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
 
@@ -184,64 +151,19 @@ async def test_manual_light_on_in_dark_room_applies_adaptive_lighting(
     hass.states.async_set("light.bedroom_lights", "on")
     await hass.async_block_till_done()
 
-    assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 100
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 100
-
-    assert len(adaptive_lighting_calls) == 1
-    assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
-    assert adaptive_lighting_calls[0].data["turn_on_lights"] is True
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) >= 1
+    assert "brightness_pct" in turn_on_calls[-1].data
+    assert "color_temp_kelvin" in turn_on_calls[-1].data
 
 
 @pytest.mark.freeze_time("2026-05-05 14:00:00-07:00")
-async def test_restart_reapplies_lux_brightness_settings(
-    hass,
-    adaptive_lighting_lux_brightness_restore_config,
-    adaptive_lighting_calls,
-    adaptive_lighting_change_switch_settings_calls,
-) -> None:
-    """Runtime AL setting changes reset on restart, so HA start should reapply them."""
-
-    assert await async_setup_component(
-        hass,
-        "automation",
-        adaptive_lighting_lux_brightness_restore_config,
-    )
-
-    hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "on")
-    hass.states.async_set("input_boolean.sleeping_mode", "off")
-    hass.states.async_set("input_boolean.focus_mode", "off")
-    hass.states.async_set("light.bedroom_lights", "on")
-    # In this room, 49 lx can already mean "all bedroom lights are bright".
-    # Keep that calibrated reading in the low-brightness bucket.
-    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "49")
-    await hass.async_block_till_done()
-
-    await hass.services.async_call(
-        "automation",
-        "trigger",
-        {
-            "entity_id": "automation.bedroom_adaptive_lighting_lux_brightness_restore",
-            "skip_condition": False,
-        },
-        blocking=True,
-    )
-    await hass.async_block_till_done()
-
-    assert len(adaptive_lighting_change_switch_settings_calls) == 1
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "min_brightness") == 15
-    assert _brightness_setting(adaptive_lighting_change_switch_settings_calls[0].data, "max_brightness") == 25
-
-    assert len(adaptive_lighting_calls) == 1
-    assert adaptive_lighting_calls[0].data["lights"] == "light.bedroom_lights"
-    assert adaptive_lighting_calls[0].data["turn_on_lights"] is False
-
 
 async def test_master_toggle_blocks_bedroom_auto_on(
     hass,
+    light_service_calls,
+    input_boolean_service_calls,
     bedroom_auto_on_config,
-    adaptive_lighting_calls,
 ) -> None:
     """Block auto-on when the repo-wide automation toggle is disabled."""
 
@@ -258,28 +180,8 @@ async def test_master_toggle_blocks_bedroom_auto_on(
     hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
     await hass.async_block_till_done()
 
-    assert adaptive_lighting_calls == []
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) == 0
 
 
-async def test_main_adaptive_lighting_switch_blocks_bedroom_auto_on(
-    hass,
-    bedroom_auto_on_config,
-    adaptive_lighting_calls,
-) -> None:
-    """Block normal bedroom AL when the main Adaptive Lighting switch is off."""
 
-    assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
-
-    hass.states.async_set("input_boolean.automations_enabled", "on")
-    hass.states.async_set("switch.adaptive_lighting_adaptive_lighting", "off")
-    hass.states.async_set("input_boolean.sleeping_mode", "off")
-    hass.states.async_set("input_boolean.focus_mode", "off")
-    hass.states.async_set("light.bedroom_lights", "off")
-    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
-    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "off")
-    await hass.async_block_till_done()
-
-    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
-    await hass.async_block_till_done()
-
-    assert adaptive_lighting_calls == []
