@@ -12,13 +12,16 @@ scene: !include scenes.yaml
 input_boolean:
   automations_enabled:
     name: Automations Enabled
-  bedroom_override_restore_adaptive_lighting:
-    name: Bedroom Override Restore Adaptive Lighting
+  bedroom_auto_on_restore_state:
+    name: Bedroom Auto-On Restore State
   bedroom_sleep_override_active:
     name: Bedroom Sleep Override Active
   bedroom_focus_override_active:
     name: Bedroom Focus Override Active
 
+  bedroom_auto_on_enabled:
+    name: Bedroom Auto-On Enabled
+    initial: on
 timer:
   bedroom_occupancy_hold:
     duration: "00:50:00"
@@ -30,7 +33,8 @@ template:
         unique_id: bedroom_activity_signal
         device_class: occupancy
         state: >
-          {{ is_state('binary_sensor.myggspray_wrlss_mtn_sensor_occupancy', 'on') }}
+          {{ is_state('binary_sensor.myggspray_wrlss_mtn_sensor_occupancy', 'on')
+          }}
 
       # Public room-occupancy sensor kept stable for the existing automations.
       - name: "Bedroom Occupancy"
@@ -38,7 +42,8 @@ template:
         device_class: occupancy
         state: >
           {{ is_state('binary_sensor.bedroom_activity', 'on')
-             or states('media_player.sony_xr_65a95l_2') not in ['off', 'unavailable', 'idle']
+             or states('media_player.sony_xr_65a95l_2') not in ['off', 'unavailable',
+          'idle']
              or is_state('switch.grillplats_plug', 'on')
              or is_state('timer.bedroom_occupancy_hold', 'active')
           }}

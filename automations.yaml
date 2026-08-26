@@ -1,247 +1,204 @@
-- id: '1770454261000'
+- actions:
+  - action: notify.mobile_app_public_phone_270b1d7119e8d1c8
+    data:
+      data:
+        push:
+          sound:
+            critical: 1
+            name: default
+            volume: 0.3
+      message: "PM2.5 is high! Current level: {{ states('sensor.alpstuga_air_quality_monitor_pm2_5')\
+        \ }} \xB5g/m\xB3"
+    metadata: {}
   alias: PM2.5 alert
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
   description: ''
+  id: '1770454261000'
+  mode: single
   triggers:
-  - type: pm25
-    device_id: masked_device_2488205a8c53a9f7
-    entity_id: masked_entity_5e6d74208ea05b47
+  - above: 40
+    device_id: masked_device_2084826e725aa97a
     domain: sensor
-    trigger: device
-    above: 40
+    entity_id: masked_entity_74bab095b1054a48
     for:
       hours: 0
       minutes: 0
       seconds: 20
+    trigger: device
+    type: pm25
+- actions:
+  - action: notify.mobile_app_public_phone_270b1d7119e8d1c8
+    data:
+      data:
+        push:
+          sound:
+            critical: 1
+            name: default
+            volume: 0.3
+      message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
+        }} ppm'
+    metadata: {}
+  alias: CO2 Alert
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
     state: 'on'
-  actions:
-  - action: notify.mobile_app_public_phone_051af3d19ff62021
-    metadata: {}
-    data:
-      message: 'PM2.5 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_pm2_5'')
-        }} µg/m³'
-      data:
-        push:
-          sound:
-            name: default
-            critical: 1
-            volume: 0.3
-  mode: single
-- id: '1770455525782'
-  alias: CO2 Alert
   description: ''
+  id: '1770455525782'
+  mode: single
   triggers:
-  - type: carbon_dioxide
-    device_id: masked_device_2488205a8c53a9f7
-    entity_id: masked_entity_9041278718ccf5f6
+  - above: 1000
+    device_id: masked_device_2084826e725aa97a
     domain: sensor
-    trigger: device
-    above: 1000
+    entity_id: masked_entity_10a1e2ffd88b2c4a
     for:
       hours: 0
       minutes: 1
       seconds: 0
-  conditions:
-  - condition: state
-    entity_id: input_boolean.automations_enabled
-    state: 'on'
-  actions:
-  - action: notify.mobile_app_public_phone_051af3d19ff62021
-    metadata: {}
-    data:
-      message: 'CO2 is high! Current level: {{ states(''sensor.alpstuga_air_quality_monitor_carbon_dioxide'')
-        }} ppm'
-      data:
-        push:
-          sound:
-            name: default
-            critical: 1
-            volume: 0.3
-  mode: single
-- id: '1773020624303'
-  alias: "Bedroom: Adaptive Lighting Manager"
-  description: Adaptive Lighting fully controls brightness and color temperature, using apply for immediate sync.
-  triggers:
-  - trigger: state
-    entity_id:
-    - binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
-    to: 'on'
-    id: motion_trigger
-  - trigger: state
-    entity_id:
-    - binary_sensor.myggbett_door_window_sensor_door
-    from: 'off'
-    to: 'on'
-    id: door_open
-  - trigger: state
-    entity_id:
-    - light.bedroom_lights
-    from: 'off'
-    to: 'on'
-    id: manual_on
-  - trigger: time
-    at: '13:00:00'
-    id: schedule_update
-  - trigger: time
-    at: '18:00:00'
-    id: schedule_update
-  conditions:
-  - condition: state
-    entity_id: input_boolean.automations_enabled
-    state: 'on'
-  - condition: state
-    entity_id: input_boolean.sleeping_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.focus_mode
-    state: 'off'
-  actions:
+    trigger: device
+    type: carbon_dioxide
+- actions:
   - choose:
     - conditions:
       - condition: trigger
         id: schedule_update
       - condition: state
-        entity_id: switch.adaptive_lighting_adaptive_lighting
+        entity_id: input_boolean.bedroom_auto_on_enabled
         state: 'on'
       - condition: template
-        value_template: >
-          {{ expand('light.bedroom_lights')
-             | selectattr('state', 'eq', 'on') | list | count > 0 }}
+        value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state',\
+          \ 'eq', 'on') | list | count > 0 }}\n"
       sequence:
-      - action: adaptive_lighting.change_switch_settings
+      - action: light.turn_on
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-      - action: adaptive_lighting.apply
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
-          turn_on_lights: true
+          brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+            | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
+            = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
+            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
+            endif %}'
+          color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
+            < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 10
+        target:
+          entity_id: light.bedroom_lights
     - conditions:
       - condition: trigger
         id: motion_trigger
       - condition: template
-        value_template: >
-          {{ expand('light.bedroom_lights')
-             | selectattr('state', 'eq', 'on') | list | count == 0 }}
-      - condition: numeric_state
+        value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state',\
+          \ 'eq', 'on') | list | count == 0 }}\n"
+      - below: 10
+        condition: numeric_state
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
-        below: 10
       sequence:
-      - action: switch.turn_on
+      - action: input_boolean.turn_on
         target:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-      - action: adaptive_lighting.set_manual_control
+          entity_id: input_boolean.bedroom_auto_on_enabled
+      - action: light.turn_on
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          manual_control: false
-      - action: adaptive_lighting.change_switch_settings
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-      - action: adaptive_lighting.apply
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
-          turn_on_lights: true
+          brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+            | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
+            = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
+            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
+            endif %}'
+          color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
+            < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 1
+        target:
+          entity_id: light.bedroom_lights
     - conditions:
       - condition: trigger
         id: door_open
       - condition: template
-        value_template: >
-          {{ expand('light.bedroom_lights')
-             | selectattr('state', 'eq', 'on') | list | count == 0 }}
-      - condition: numeric_state
+        value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state',\
+          \ 'eq', 'on') | list | count == 0 }}\n"
+      - below: 10
+        condition: numeric_state
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
-        below: 10
       sequence:
-      - action: switch.turn_on
+      - action: input_boolean.turn_on
         target:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-      - action: adaptive_lighting.set_manual_control
+          entity_id: input_boolean.bedroom_auto_on_enabled
+      - action: light.turn_on
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          manual_control: false
-      - action: adaptive_lighting.change_switch_settings
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-      - action: adaptive_lighting.apply
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
-          turn_on_lights: true
+          brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+            | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
+            = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
+            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
+            endif %}'
+          color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
+            < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 1
+        target:
+          entity_id: light.bedroom_lights
     - conditions:
       - condition: trigger
         id: manual_on
       - condition: state
-        entity_id: switch.adaptive_lighting_adaptive_lighting
+        entity_id: input_boolean.bedroom_auto_on_enabled
         state: 'on'
-      - condition: numeric_state
+      - below: 10
+        condition: numeric_state
         entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
-        below: 10
       sequence:
-      - action: adaptive_lighting.change_switch_settings
+      - action: light.turn_on
         data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-      - action: adaptive_lighting.apply
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
-          turn_on_lights: true
+          brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+            | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
+            = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
+            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
+            endif %}'
+          color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
+            < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 1
-  mode: restart
-- id: '1775000000001'
-  alias: "Bedroom: Adaptive Lighting Manual Opt-Out Bridge"
-  description: Turns the main Adaptive Lighting switch off when bedroom lights enter manual control in normal mode.
-  triggers:
-  - trigger: event
-    event_type: adaptive_lighting.manual_control
+        target:
+          entity_id: light.bedroom_lights
+  alias: 'Bedroom: Auto-On Manager'
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
     state: 'on'
-  - condition: template
-    value_template: "{{ trigger.event.data.switch == 'switch.adaptive_lighting_adaptive_lighting' }}"
   - condition: state
     entity_id: input_boolean.sleeping_mode
     state: 'off'
   - condition: state
     entity_id: input_boolean.focus_mode
     state: 'off'
-  actions:
-  - action: switch.turn_off
-    target:
-      entity_id: switch.adaptive_lighting_adaptive_lighting
+  description: Manages auto-on logic using native brightness and color templates.
+  id: '1773020624303'
   mode: restart
-- id: '1775000000004'
-  alias: "Bedroom: Manual Lights Off Disables Auto-On"
-  description: >-
-    When the user manually turns off all bedroom lights while still in the room,
-    disable the AL switch so motion does not override their choice.
-    The AL switch resets back to on when the room becomes vacant (Safe Auto-Off).
   triggers:
-  - trigger: state
-    entity_id:
-    - light.tv_light
-    - light.bed_light
-    - light.window_light
-    - light.desk_light
-    to: 'off'
+  - entity_id:
+    - binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+    id: motion_trigger
+    to: 'on'
+    trigger: state
+  - entity_id:
+    - binary_sensor.myggbett_door_window_sensor_door
+    from: 'off'
+    id: door_open
+    to: 'on'
+    trigger: state
+  - entity_id:
+    - light.bedroom_lights
+    from: 'off'
+    id: manual_on
+    to: 'on'
+    trigger: state
+  - at: '13:00:00'
+    id: schedule_update
+    trigger: time
+  - at: '16:30:00'
+    id: schedule_update
+    trigger: time
+- actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.bedroom_auto_on_enabled
+  alias: 'Bedroom: Manual Lights Off Disables Auto-On'
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
@@ -262,164 +219,32 @@
     entity_id: input_boolean.bedroom_focus_override_active
     state: 'off'
   - condition: template
-    value_template: >
-      {{ expand('light.bedroom_lights')
-         | selectattr('state', 'eq', 'on') | list | count == 0 }}
-  actions:
-  - action: switch.turn_off
-    target:
-      entity_id: switch.adaptive_lighting_adaptive_lighting
+    value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state', 'eq',\
+      \ 'on') | list | count == 0 }}\n"
+  description: When the user manually turns off all bedroom lights while still in
+    the room, disable the AL switch so motion does not override their choice. The
+    AL switch resets back to on when the room becomes vacant (Safe Auto-Off).
+  id: '1775000000004'
   mode: single
-- id: '1775000000002'
-  alias: "Bedroom: Adaptive Lighting Immediate Resume"
-  description: Reapplies normal Adaptive Lighting in normal mode, or rewrites the saved restore state during temporary overrides.
   triggers:
-  - trigger: state
-    entity_id: switch.adaptive_lighting_adaptive_lighting
-    from: 'off'
-    to: 'on'
-  - trigger: state
-    entity_id: switch.adaptive_lighting_adaptive_lighting
-    from: 'on'
+  - entity_id:
+    - light.tv_light
+    - light.bed_light
+    - light.window_light
+    - light.desk_light
     to: 'off'
-  conditions:
-  - condition: state
-    entity_id: input_boolean.automations_enabled
-    state: 'on'
-  actions:
-  - choose:
-    - conditions:
-      - condition: or
-        conditions:
-        - condition: state
-          entity_id: input_boolean.bedroom_sleep_override_active
-          state: 'on'
-        - condition: state
-          entity_id: input_boolean.bedroom_focus_override_active
-          state: 'on'
-      - condition: template
-        value_template: "{{ trigger.to_state.context.parent_id == none }}"
-      sequence:
-      - if:
-        - condition: state
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          state: 'on'
-        then:
-        - action: input_boolean.turn_on
-          target:
-            entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-        - action: switch.turn_off
-          target:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-        else:
-        - action: input_boolean.turn_off
-          target:
-            entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-    - conditions:
-      - condition: state
-        entity_id: switch.adaptive_lighting_adaptive_lighting
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.bedroom_sleep_override_active
-        state: 'off'
-      - condition: state
-        entity_id: input_boolean.bedroom_focus_override_active
-        state: 'off'
-      sequence:
-      - action: adaptive_lighting.change_switch_settings
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          use_defaults: current
-          min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-          max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-      - action: adaptive_lighting.set_manual_control
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          manual_control: false
-      - action: adaptive_lighting.apply
-        data:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
-          lights: light.bedroom_lights
-          turn_on_lights: false
-  mode: restart
-- id: '1775000000003'
-  alias: "Bedroom: Adaptive Lighting Lux Brightness Restore"
-  description: Reapplies lux-based Adaptive Lighting brightness settings after Home Assistant restarts.
-  triggers:
-  - trigger: homeassistant
-    event: start
-  conditions:
-  - condition: state
-    entity_id: input_boolean.automations_enabled
-    state: 'on'
-  - condition: state
-    entity_id: switch.adaptive_lighting_adaptive_lighting
-    state: 'on'
-  - condition: state
-    entity_id: input_boolean.sleeping_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.focus_mode
-    state: 'off'
-  actions:
-  - action: adaptive_lighting.change_switch_settings
-    data:
-      entity_id: switch.adaptive_lighting_adaptive_lighting
-      use_defaults: current
-      min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-      max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-  - if:
-    - condition: template
-      value_template: >
-        {{ expand('light.bedroom_lights')
-           | selectattr('state', 'eq', 'on') | list | count > 0 }}
-    then:
-    - action: adaptive_lighting.apply
-      data:
-        entity_id: switch.adaptive_lighting_adaptive_lighting
-        lights: light.bedroom_lights
-        transition: 3
-        turn_on_lights: false
-  mode: single
-- id: '1774000000000'
-  alias: "Bedroom: Occupancy Hold Timer"
-  description: Uses an explicit timer to retain occupancy so activity detection and occupancy inference stay separate.
-  triggers:
-  - trigger: state
-    entity_id: binary_sensor.bedroom_activity
-    to: 'on'
-    id: activity_on
-  - trigger: event
-    event_type: timer.finished
-    event_data:
-      entity_id: timer.bedroom_occupancy_hold
-    id: hold_timer_finished
-  - trigger: state
-    entity_id: media_player.sony_xr_65a95l_2
-    id: tv_changed
-  - trigger: state
-    entity_id: switch.grillplats_plug
-    id: plug_changed
-  - trigger: state
-    entity_id: input_boolean.automations_enabled
-    from: 'off'
-    to: 'on'
-    id: automations_reenabled
-  conditions:
-  - condition: state
-    entity_id: input_boolean.automations_enabled
-    state: 'on'
-  actions:
+    trigger: state
+- actions:
   - choose:
     - conditions:
       - condition: trigger
         id: activity_on
       sequence:
       - action: timer.start
+        data:
+          duration: 01:30:00
         target:
           entity_id: timer.bedroom_occupancy_hold
-        data:
-          duration: '01:30:00'
     - conditions:
       - condition: trigger
         id: hold_timer_finished
@@ -428,13 +253,13 @@
         state: 'on'
       sequence:
       - action: timer.start
+        data:
+          duration: 01:30:00
         target:
           entity_id: timer.bedroom_occupancy_hold
-        data:
-          duration: '01:30:00'
       - if:
         - condition: state
-          entity_id: switch.adaptive_lighting_adaptive_lighting
+          entity_id: input_boolean.bedroom_auto_on_enabled
           state: 'on'
         - condition: state
           entity_id: input_boolean.sleeping_mode
@@ -443,85 +268,103 @@
           entity_id: input_boolean.focus_mode
           state: 'off'
         - condition: template
-          value_template: >
-            {{ expand('light.bedroom_lights')
-               | selectattr('state', 'eq', 'on') | list | count == 0 }}
-        - condition: numeric_state
+          value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state',\
+            \ 'eq', 'on') | list | count == 0 }}\n"
+        - below: 10
+          condition: numeric_state
           entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
-          below: 10
         then:
-        - action: adaptive_lighting.change_switch_settings
+        - action: light.turn_on
           data:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-        - action: adaptive_lighting.apply
-          data:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            lights: light.bedroom_lights
-            turn_on_lights: true
+            brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+              | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
+              = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{%
+              elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else
+              %}15{% endif %}'
+            color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
+              < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
             transition: 1
+          target:
+            entity_id: light.bedroom_lights
     - conditions:
       - condition: trigger
         id: tv_changed
-      # TV turning on or off both count as recent room activity, but idle/off churn does not.
       - condition: template
-        value_template: >
-          {{ trigger.from_state is not none
-             and trigger.to_state is not none
-             and (
-               trigger.from_state.state not in ['off', 'idle', 'unavailable']
-               or trigger.to_state.state not in ['off', 'idle', 'unavailable']
-             ) }}
+        value_template: "{{ trigger.from_state is not none\n   and trigger.to_state\
+          \ is not none\n   and (\n     trigger.from_state.state not in ['off', 'idle',\
+          \ 'unavailable']\n     or trigger.to_state.state not in ['off', 'idle',\
+          \ 'unavailable']\n   ) }}\n"
       sequence:
       - action: timer.start
+        data:
+          duration: 01:30:00
         target:
           entity_id: timer.bedroom_occupancy_hold
-        data:
-          duration: '01:30:00'
     - conditions:
       - condition: trigger
         id: plug_changed
-      # Plug turning on or off both mean someone interacted with it in the room.
       - condition: template
-        value_template: >
-          {{ trigger.from_state is not none
-             and trigger.to_state is not none
-             and (
-               trigger.from_state.state == 'on'
-               or trigger.to_state.state == 'on'
-             ) }}
+        value_template: "{{ trigger.from_state is not none\n   and trigger.to_state\
+          \ is not none\n   and (\n     trigger.from_state.state == 'on'\n     or\
+          \ trigger.to_state.state == 'on'\n   ) }}\n"
       sequence:
       - action: timer.start
+        data:
+          duration: 01:30:00
         target:
           entity_id: timer.bedroom_occupancy_hold
-        data:
-          duration: '01:30:00'
     - conditions:
       - condition: trigger
         id: automations_reenabled
       - condition: template
-        value_template: >
-          {{ expand('light.bedroom_lights')
-             | selectattr('state', 'eq', 'on') | list | count > 0 }}
+        value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state',\
+          \ 'eq', 'on') | list | count > 0 }}\n"
       sequence:
       - action: timer.start
+        data:
+          duration: 01:30:00
         target:
           entity_id: timer.bedroom_occupancy_hold
-        data:
-          duration: '01:30:00'
+  alias: 'Bedroom: Occupancy Hold Timer'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
+  description: Uses an explicit timer to retain occupancy so activity detection and
+    occupancy inference stay separate.
+  id: '1774000000000'
   mode: restart
-- id: '1773026091419'
-  alias: "Bedroom: Safe Auto-Off When Vacant"
-  description: Turns off the lights after 1 minute of vacancy when the TV and monitored plug are also off.
   triggers:
-  - trigger: state
-    entity_id: binary_sensor.bedroom_occupancy
-    from: 'on'
-    to: 'off'
-    for:
-      minutes: 1
+  - entity_id: binary_sensor.bedroom_activity
+    id: activity_on
+    to: 'on'
+    trigger: state
+  - event_data:
+      entity_id: timer.bedroom_occupancy_hold
+    event_type: timer.finished
+    id: hold_timer_finished
+    trigger: event
+  - entity_id: media_player.sony_xr_65a95l_2
+    id: tv_changed
+    trigger: state
+  - entity_id: switch.grillplats_plug
+    id: plug_changed
+    trigger: state
+  - entity_id: input_boolean.automations_enabled
+    from: 'off'
+    id: automations_reenabled
+    to: 'on'
+    trigger: state
+- actions:
+  - action: light.turn_off
+    data:
+      transition: 5
+    target:
+      entity_id: light.bedroom_lights
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.bedroom_auto_on_enabled
+  alias: 'Bedroom: Safe Auto-Off When Vacant'
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
@@ -538,23 +381,49 @@
   - condition: state
     entity_id: switch.grillplats_plug
     state: 'off'
-  actions:
-  - action: light.turn_off
-    target:
-      entity_id: light.bedroom_lights
-    data:
-      transition: 5
-  - action: switch.turn_on
-    target:
-      entity_id: switch.adaptive_lighting_adaptive_lighting
+  description: Turns off the lights after 1 minute of vacancy when the TV and monitored
+    plug are also off.
+  id: '1773026091419'
   mode: restart
-- id: '1773030487845'
-  alias: "Bedroom: Late-Night Dim Light Mode"
-  description: Keeps restart behavior for motion retriggering while adjusting shutdown order to prevent light revival.
   triggers:
-  - trigger: state
-    entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
-    to: 'on'
+  - entity_id: binary_sensor.bedroom_occupancy
+    for:
+      minutes: 1
+    from: 'on'
+    to: 'off'
+    trigger: state
+- actions:
+  - repeat:
+      sequence:
+      - action: light.turn_on
+        data:
+          brightness: 1
+          color_temp_kelvin: 2200
+          transition: 2
+        target:
+          entity_id: light.window_light
+      - continue_on_timeout: true
+        timeout: 00:00:50
+        wait_for_trigger:
+        - entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+          for:
+            seconds: 2
+          to: 'off'
+          trigger: state
+      - action: light.turn_off
+        data:
+          transition: 2
+        target:
+          entity_id: light.window_light
+      - delay: 00:00:04
+      while:
+      - condition: state
+        entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.sleeping_mode
+        state: 'on'
+  alias: 'Bedroom: Late-Night Dim Light Mode'
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
@@ -566,54 +435,21 @@
     entity_id: input_boolean.focus_mode
     state: 'off'
   - condition: template
-    value_template: >
-      {{ expand('light.bedroom_lights')
-         | selectattr('state', 'eq', 'on') | list | count == 0 }}
-  actions:
-  - repeat:
-      while:
-      - condition: state
-        entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.sleeping_mode
-        state: 'on'
-      sequence:
-      - action: light.turn_on
-        target:
-          entity_id: light.window_light
-        data:
-          brightness: 1
-          color_temp_kelvin: 2200
-          transition: 2
-      - wait_for_trigger:
-        - trigger: state
-          entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
-          to: 'off'
-          for:
-            seconds: 2
-        timeout: 00:00:50
-        continue_on_timeout: true
-      - action: light.turn_off
-        target:
-          entity_id: light.window_light
-        data:
-          transition: 2
-      - delay: 00:00:04
-  - action: adaptive_lighting.apply
-    data:
-      entity_id: switch.adaptive_lighting_adaptive_lighting
-      lights: light.window_light
-      turn_on_lights: false
+    value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state', 'eq',\
+      \ 'on') | list | count == 0 }}\n"
+  description: Keeps restart behavior for motion retriggering while adjusting shutdown
+    order to prevent light revival.
+  id: '1773030487845'
   mode: restart
-- id: '1773032006764'
-  alias: "Bedroom: Wake-Up Turns Off Sleep Mode"
-  description: Opening the door after 10:00 on weekdays or 11:00 on weekends counts as waking up.
   triggers:
-  - trigger: state
-    entity_id: binary_sensor.myggbett_door_window_sensor_door
-    from: 'off'
+  - entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
     to: 'on'
+    trigger: state
+- actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.sleeping_mode
+  alias: 'Bedroom: Wake-Up Turns Off Sleep Mode'
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
@@ -628,8 +464,8 @@
     conditions:
     - condition: and
       conditions:
-      - condition: time
-        after: '10:00:00'
+      - after: '10:00:00'
+        condition: time
       - condition: time
         weekday:
         - mon
@@ -639,34 +475,22 @@
         - fri
     - condition: and
       conditions:
-      - condition: time
-        after: '11:00:00'
+      - after: '11:00:00'
+        condition: time
       - condition: time
         weekday:
         - sat
         - sun
-  actions:
-  - action: input_boolean.turn_off
-    target:
-      entity_id: input_boolean.sleeping_mode
+  description: Opening the door after 10:00 on weekdays or 11:00 on weekends counts
+    as waking up.
+  id: '1773032006764'
   mode: single
-- id: '1773033168449'
-  alias: "State Sync: Sleep Mode Lighting"
-  description: Fixes the issue where the lights could stay on after sleep mode ends.
   triggers:
-  - trigger: state
-    entity_id: input_boolean.sleeping_mode
+  - entity_id: binary_sensor.myggbett_door_window_sensor_door
+    from: 'off'
     to: 'on'
-    id: sleep_on
-  - trigger: state
-    entity_id: input_boolean.sleeping_mode
-    to: 'off'
-    id: sleep_off
-  conditions:
-  - condition: state
-    entity_id: input_boolean.automations_enabled
-    state: 'on'
-  actions:
+    trigger: state
+- actions:
   - choose:
     - conditions:
       - condition: trigger
@@ -675,7 +499,20 @@
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.bedroom_sleep_override_active
-      - if:
+      - else:
+        - else:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.bedroom_auto_on_restore_state
+          if:
+          - condition: state
+            entity_id: input_boolean.bedroom_auto_on_enabled
+            state: 'on'
+          then:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.bedroom_auto_on_restore_state
+        if:
         - condition: state
           entity_id: input_boolean.focus_mode
           state: 'on'
@@ -688,34 +525,21 @@
             entity_id: input_boolean.bedroom_focus_override_active
             state: 'off'
           then:
-          - if:
+          - else:
+            - action: input_boolean.turn_off
+              target:
+                entity_id: input_boolean.bedroom_auto_on_restore_state
+            if:
             - condition: state
-              entity_id: switch.adaptive_lighting_adaptive_lighting
+              entity_id: input_boolean.bedroom_auto_on_enabled
               state: 'on'
             then:
             - action: input_boolean.turn_on
               target:
-                entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-            else:
-            - action: input_boolean.turn_off
-              target:
-                entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-        else:
-        - if:
-          - condition: state
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            state: 'on'
-          then:
-          - action: input_boolean.turn_on
-            target:
-              entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-          else:
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-      - action: switch.turn_off
+                entity_id: input_boolean.bedroom_auto_on_restore_state
+      - action: input_boolean.turn_off
         target:
-          entity_id: switch.adaptive_lighting_adaptive_lighting
+          entity_id: input_boolean.bedroom_auto_on_enabled
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.bedroom_sleep_override_active
@@ -723,26 +547,36 @@
           count: 3
           sequence:
           - action: light.turn_on
+            data:
+              brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+                | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set
+                hour = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7
+                %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{%
+                else %}15{% endif %}'
+              color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or
+                hour < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
+              transition: 1
             target:
               entity_id: light.bedroom_lights
-            data:
-              brightness_pct: 1
-              color_temp_kelvin: 1800
-              transition: 1
           - delay: 00:00:01
           - action: light.turn_on
+            data:
+              brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+                | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set
+                hour = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7
+                %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{%
+                else %}15{% endif %}'
+              color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or
+                hour < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
+              transition: 1
             target:
               entity_id: light.bedroom_lights
-            data:
-              brightness_pct: 15
-              color_temp_kelvin: 2100
-              transition: 1
           - delay: 00:00:01
       - action: light.turn_off
-        target:
-          entity_id: light.bedroom_lights
         data:
           transition: 10
+        target:
+          entity_id: light.bedroom_lights
     - conditions:
       - condition: trigger
         id: sleep_off
@@ -752,90 +586,77 @@
           count: 3
           sequence:
           - action: light.turn_on
-            target:
-              entity_id: light.bedroom_lights
             data:
-              brightness_pct: 15
+              brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
+                | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set
+                hour = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7
+                %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{%
+                else %}15{% endif %}'
+              color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or
+                hour < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
               rgb_color: '{% if is_state(''weather.forecast_home'', ''rainy'') %}
                 [0, 0, 255] {% elif is_state(''weather.forecast_home'', ''sunny'')
                 %} [255, 200, 0] {% else %} [255, 255, 255] {% endif %}
 
                 '
               transition: 0.5
+            target:
+              entity_id: light.bedroom_lights
           - delay: 00:00:01
           - action: light.turn_off
             target:
               entity_id: light.bedroom_lights
           - delay: 00:00:01
-      - if:
+      - else:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.bedroom_auto_on_enabled
+        if:
         - condition: state
-          entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
+          entity_id: input_boolean.bedroom_auto_on_restore_state
           state: 'on'
         then:
-        - action: switch.turn_on
+        - action: input_boolean.turn_on
           target:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-        - action: adaptive_lighting.change_switch_settings
-          data:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-        - action: adaptive_lighting.apply
-          data:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            lights: light.bedroom_lights
-            transition: 5
-            turn_on_lights: false
-        else:
-        - action: switch.turn_off
-          target:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
+            entity_id: input_boolean.bedroom_auto_on_enabled
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.bedroom_sleep_override_active
       - if:
         - condition: state
-          entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
+          entity_id: input_boolean.bedroom_auto_on_restore_state
           state: 'on'
         - condition: state
           entity_id: input_boolean.focus_mode
           state: 'off'
         - condition: template
-          value_template: >
-            {{ expand('light.bedroom_lights')
-               | selectattr('state', 'eq', 'on') | list | count == 0 }}
+          value_template: "{{ expand('light.bedroom_lights')\n   | selectattr('state',\
+            \ 'eq', 'on') | list | count == 0 }}\n"
         - condition: state
           entity_id: binary_sensor.myggspray_wrlss_mtn_sensor_occupancy
           state: 'on'
-        - condition: numeric_state
+        - below: 10
+          condition: numeric_state
           entity_id: sensor.myggspray_wrlss_mtn_sensor_illuminance
-          below: 10
-        then:
-        - action: adaptive_lighting.change_switch_settings
-          data:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            use_defaults: current
-            min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-            max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-        - action: adaptive_lighting.apply
-          data:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            lights: light.bedroom_lights
-            transition: 1
-            turn_on_lights: true
-  mode: restart
-- id: '1773271583160'
-  alias: "Bedroom: Focus Mode Sync"
-  description: Lets Focus temporarily own bedroom lighting, then restores the saved Adaptive Lighting state when it exits.
-  triggers:
-  - trigger: state
-    entity_id: input_boolean.focus_mode
+        then: []
+  alias: 'State Sync: Sleep Mode Lighting'
   conditions:
   - condition: state
     entity_id: input_boolean.automations_enabled
     state: 'on'
-  actions:
+  description: Fixes the issue where the lights could stay on after sleep mode ends.
+  id: '1773033168449'
+  mode: restart
+  triggers:
+  - entity_id: input_boolean.sleeping_mode
+    id: sleep_on
+    to: 'on'
+    trigger: state
+  - entity_id: input_boolean.sleeping_mode
+    id: sleep_off
+    to: 'off'
+    trigger: state
+- actions:
   - choose:
     - conditions:
       - condition: state
@@ -845,7 +666,37 @@
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.bedroom_focus_override_active
-      - if:
+      - else:
+        - else:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.bedroom_auto_on_restore_state
+          if:
+          - condition: state
+            entity_id: input_boolean.bedroom_auto_on_enabled
+            state: 'on'
+          then:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.bedroom_auto_on_restore_state
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.bedroom_auto_on_enabled
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.bedroom_focus_override_active
+        - action: light.turn_off
+          data:
+            transition: 2
+          target:
+            entity_id: light.bedroom_lights
+        - action: light.turn_on
+          data:
+            brightness_pct: 80
+            transition: 2
+          target:
+            entity_id: light.desk_light
+        if:
         - condition: state
           entity_id: input_boolean.sleeping_mode
           state: 'on'
@@ -853,36 +704,6 @@
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.focus_mode
-        else:
-        - if:
-          - condition: state
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-            state: 'on'
-          then:
-          - action: input_boolean.turn_on
-            target:
-              entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-          else:
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
-        - action: switch.turn_off
-          target:
-            entity_id: switch.adaptive_lighting_adaptive_lighting
-        - action: input_boolean.turn_on
-          target:
-            entity_id: input_boolean.bedroom_focus_override_active
-        - action: light.turn_off
-          target:
-            entity_id: light.bedroom_lights
-          data:
-            transition: 2
-        - action: light.turn_on
-          target:
-            entity_id: light.desk_light
-          data:
-            brightness_pct: 80
-            transition: 2
     - conditions:
       - condition: state
         entity_id: input_boolean.focus_mode
@@ -901,31 +722,33 @@
             entity_id: input_boolean.sleeping_mode
             state: 'off'
           then:
-          - if:
+          - else:
+            - action: input_boolean.turn_off
+              target:
+                entity_id: input_boolean.bedroom_auto_on_enabled
+            if:
             - condition: state
-              entity_id: input_boolean.bedroom_override_restore_adaptive_lighting
+              entity_id: input_boolean.bedroom_auto_on_restore_state
               state: 'on'
             then:
-            - action: switch.turn_on
+            - action: input_boolean.turn_on
               target:
-                entity_id: switch.adaptive_lighting_adaptive_lighting
-            - action: adaptive_lighting.change_switch_settings
-              data:
-                entity_id: switch.adaptive_lighting_adaptive_lighting
-                use_defaults: current
-                min_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
-                max_brightness: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set hour = now().hour %} {% if hour >= 18 %}100{% elif hour < 7 %}10{% elif lux < 10 %}55{% elif lux < 25 %}45{% elif lux < 40 %}35{% else %}25{% endif %}"
-            - action: adaptive_lighting.apply
-              data:
-                entity_id: switch.adaptive_lighting_adaptive_lighting
-                lights: light.bedroom_lights
-                transition: 3
-                turn_on_lights: false
-            else:
-            - action: switch.turn_off
+                entity_id: input_boolean.bedroom_auto_on_enabled
+            - action: light.turn_on
               target:
-                entity_id: switch.adaptive_lighting_adaptive_lighting
+                entity_id: light.bedroom_lights
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.bedroom_focus_override_active
+  alias: 'Bedroom: Focus Mode Sync'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.automations_enabled
+    state: 'on'
+  description: Lets Focus temporarily own bedroom lighting, then restores the saved
+    Adaptive Lighting state when it exits.
+  id: '1773271583160'
   mode: restart
+  triggers:
+  - entity_id: input_boolean.focus_mode
+    trigger: state
