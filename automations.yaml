@@ -1,5 +1,5 @@
 - actions:
-  - action: notify.mobile_app_public_phone_9ce672d9e3856b2b
+  - action: notify.mobile_app_public_phone_4c30cf7d36047b14
     data:
       data:
         push:
@@ -20,9 +20,9 @@
   mode: single
   triggers:
   - above: 40
-    device_id: masked_device_49137cc9a66f6b45
+    device_id: masked_device_e08d472ad4236fe5
     domain: sensor
-    entity_id: masked_entity_b059aff7935ee2b0
+    entity_id: masked_entity_b59d968a95fb5460
     for:
       hours: 0
       minutes: 0
@@ -30,7 +30,7 @@
     trigger: device
     type: pm25
 - actions:
-  - action: notify.mobile_app_public_phone_9ce672d9e3856b2b
+  - action: notify.mobile_app_public_phone_4c30cf7d36047b14
     data:
       data:
         push:
@@ -51,9 +51,9 @@
   mode: single
   triggers:
   - above: 1000
-    device_id: masked_device_49137cc9a66f6b45
+    device_id: masked_device_e08d472ad4236fe5
     domain: sensor
-    entity_id: masked_entity_42d58ce1595d3021
+    entity_id: masked_entity_6ad16e6fef445b3a
     for:
       hours: 0
       minutes: 1
@@ -77,8 +77,7 @@
           brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
             | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
             = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
-            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
-            endif %}'
+            lux < 15 %}70{% elif lux < 30 %}50{% else %}40{% endif %}'
           color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
             < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 10
@@ -102,8 +101,7 @@
           brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
             | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
             = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
-            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
-            endif %}'
+            lux < 15 %}70{% elif lux < 30 %}50{% else %}40{% endif %}'
           color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
             < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 1
@@ -127,8 +125,7 @@
           brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
             | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
             = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
-            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
-            endif %}'
+            lux < 15 %}70{% elif lux < 30 %}50{% else %}40{% endif %}'
           color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
             < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 1
@@ -149,8 +146,7 @@
           brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
             | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
             = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{% elif
-            lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{%
-            endif %}'
+            lux < 15 %}70{% elif lux < 30 %}50{% else %}40{% endif %}'
           color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
             < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
           transition: 1
@@ -188,9 +184,6 @@
     id: manual_on
     to: 'on'
     trigger: state
-  - at: '13:00:00'
-    id: schedule_update
-    trigger: time
   - at: '16:30:00'
     id: schedule_update
     trigger: time
@@ -279,8 +272,7 @@
             brightness_pct: '{% set lux = states(''sensor.myggspray_wrlss_mtn_sensor_illuminance'')
               | float(999) %} {% set time = now().strftime(''%H:%M'') %} {% set hour
               = now().hour %} {% if time >= ''16:30'' %}100{% elif hour < 7 %}5{%
-              elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else
-              %}15{% endif %}'
+              elif lux < 15 %}70{% elif lux < 30 %}50{% else %}40{% endif %}'
             color_temp_kelvin: '{% set hour = now().hour %} {% if hour >= 20 or hour
               < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}'
             transition: 1
@@ -623,7 +615,7 @@
         then:
         - action: light.turn_on
           data:
-            brightness_pct: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set time = now().strftime('%H:%M') %} {% set hour = now().hour %} {% if time >= '16:30' %}100{% elif hour < 7 %}5{% elif lux < 10 %}40{% elif lux < 25 %}30{% elif lux < 40 %}20{% else %}15{% endif %}"
+            brightness_pct: "{% set lux = states('sensor.myggspray_wrlss_mtn_sensor_illuminance') | float(999) %} {% set time = now().strftime('%H:%M') %} {% set hour = now().hour %} {% if time >= '16:30' %}100{% elif hour < 7 %}5{% elif lux < 15 %}70{% elif lux < 30 %}50{% else %}40{% endif %}"
             color_temp_kelvin: "{% set hour = now().hour %} {% if hour >= 20 or hour < 7 %}3500{% elif hour >= 16 %}3700{% else %}4000{% endif %}"
             transition: 1
           target:
