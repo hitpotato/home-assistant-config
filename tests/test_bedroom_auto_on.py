@@ -27,6 +27,8 @@ async def test_dark_motion_turns_on_bedroom_light(
     hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
 
     # These states satisfy the motion branch conditions.
     hass.states.async_set("light.bedroom_lights", "off")
@@ -86,6 +88,8 @@ async def test_door_open_in_dark_room_turns_on_bedroom_light(
     hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
     hass.states.async_set("light.bedroom_lights", "off")
     hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
     hass.states.async_set("binary_sensor.myggbett_door_window_sensor_door", "off")
@@ -142,6 +146,8 @@ async def test_manual_light_on_in_dark_room_applies_adaptive_lighting(
     hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
     hass.states.async_set("input_boolean.sleeping_mode", "off")
     hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "off")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
 
     # The manual-on branch only needs darkness and an off -> on light transition.
     hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
@@ -182,6 +188,35 @@ async def test_master_toggle_blocks_bedroom_auto_on(
 
     turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
     assert len(turn_on_calls) == 0
+
+
+async def test_sleep_override_active_blocks_bedroom_auto_on(
+    hass,
+    light_service_calls,
+    input_boolean_service_calls,
+    bedroom_auto_on_config,
+) -> None:
+    """Block auto-on while sleep animations or overrides are actively executing."""
+
+    assert await async_setup_component(hass, "automation", bedroom_auto_on_config)
+
+    hass.states.async_set("input_boolean.automations_enabled", "on")
+    hass.states.async_set("input_boolean.bedroom_auto_on_enabled", "on")
+    hass.states.async_set("input_boolean.sleeping_mode", "off")
+    hass.states.async_set("input_boolean.focus_mode", "off")
+    hass.states.async_set("input_boolean.bedroom_sleep_override_active", "on")
+    hass.states.async_set("input_boolean.bedroom_focus_override_active", "off")
+    hass.states.async_set("light.bedroom_lights", "off")
+    hass.states.async_set("sensor.myggspray_wrlss_mtn_sensor_illuminance", "5")
+    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "off")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("binary_sensor.myggspray_wrlss_mtn_sensor_occupancy", "on")
+    await hass.async_block_till_done()
+
+    turn_on_calls = [c for c in light_service_calls if c.domain == "light" and c.service == "turn_on" and "light.bedroom_lights" in c.data.get("entity_id", [])]
+    assert len(turn_on_calls) == 0
+
 
 
 
