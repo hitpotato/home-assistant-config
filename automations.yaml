@@ -1,5 +1,5 @@
 - actions:
-  - action: notify.mobile_app_public_phone_9bebbd35eb7ad7c3
+  - action: notify.mobile_app_public_phone_99079600d33b1fe0
     data:
       data:
         push:
@@ -20,9 +20,9 @@
   mode: single
   triggers:
   - above: 40
-    device_id: masked_device_ba82b102457a73b0
+    device_id: masked_device_d86b156fa10342b3
     domain: sensor
-    entity_id: masked_entity_6ff9b165de54fbaf
+    entity_id: masked_entity_c5efff554067fe4d
     for:
       hours: 0
       minutes: 0
@@ -30,7 +30,7 @@
     trigger: device
     type: pm25
 - actions:
-  - action: notify.mobile_app_public_phone_9bebbd35eb7ad7c3
+  - action: notify.mobile_app_public_phone_99079600d33b1fe0
     data:
       data:
         push:
@@ -51,9 +51,9 @@
   mode: single
   triggers:
   - above: 1000
-    device_id: masked_device_ba82b102457a73b0
+    device_id: masked_device_d86b156fa10342b3
     domain: sensor
-    entity_id: masked_entity_c6fd50ceab362f60
+    entity_id: masked_entity_fc0254c17af7fc1e
     for:
       hours: 0
       minutes: 1
@@ -162,6 +162,12 @@
     state: 'off'
   - condition: state
     entity_id: input_boolean.focus_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.bedroom_sleep_override_active
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.bedroom_focus_override_active
     state: 'off'
   description: Manages auto-on logic using native brightness and color templates.
   id: '1773020624303'
@@ -563,6 +569,9 @@
       - condition: trigger
         id: sleep_off
       sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.bedroom_sleep_override_active
       - delay: '00:00:00.500'
       - repeat:
           count: 3
@@ -581,6 +590,9 @@
             target:
               entity_id: light.bedroom_lights
           - delay: 00:00:01
+      - action: light.turn_off
+        target:
+          entity_id: light.bedroom_lights
       - else:
         - action: input_boolean.turn_off
           target:
