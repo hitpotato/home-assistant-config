@@ -93,31 +93,21 @@ def bedroom_auto_on_config(automations_yaml: list[dict[str, Any]]) -> dict[str, 
 
 
 @pytest.fixture
-def adaptive_lighting_manual_opt_out_config(
+def pm25_alert_config(
     automations_yaml: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Extract the tracked manual opt-out bridge automation by id."""
-    automation = find_automation_by_id(automations_yaml, "1775000000001")
+    """Extract the tracked PM2.5 alert automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1770454261000")
     return {"automation": [automation]}
 
 
 @pytest.fixture
-def adaptive_lighting_resume_bridge_config(
+def co2_alert_config(
     automations_yaml: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Extract the tracked immediate-resume bridge automation by id."""
-    automation = find_automation_by_id(automations_yaml, "1775000000002")
+    """Extract the tracked CO2 alert automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1770455525782")
     return {"automation": [automation]}
-
-
-@pytest.fixture
-def adaptive_lighting_lux_brightness_restore_config(
-    automations_yaml: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Extract the tracked restart restore automation for lux-based AL settings."""
-    automation = find_automation_by_id(automations_yaml, "1775000000003")
-    return {"automation": [automation]}
-
 
 
 @pytest.fixture
@@ -136,32 +126,6 @@ def focus_mode_lighting_config(
     """Extract the tracked focus-mode lighting automation by id."""
     automation = find_automation_by_id(automations_yaml, "1773271583160")
     return {"automation": [automation]}
-
-
-@pytest.fixture
-def sleep_with_resume_bridge_config(
-    automations_yaml: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Load Sleep mode plus the main-switch bridge together."""
-    return {
-        "automation": [
-            find_automation_by_id(automations_yaml, "1775000000002"),
-            find_automation_by_id(automations_yaml, "1773033168449"),
-        ]
-    }
-
-
-@pytest.fixture
-def focus_with_resume_bridge_config(
-    automations_yaml: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Load Focus mode plus the main-switch bridge together."""
-    return {
-        "automation": [
-            find_automation_by_id(automations_yaml, "1775000000002"),
-            find_automation_by_id(automations_yaml, "1773271583160"),
-        ]
-    }
 
 
 @pytest.fixture
@@ -322,4 +286,26 @@ def light_service_calls(hass: HomeAssistant) -> list[ServiceCall]:
 
     hass.services.async_register("light", "turn_on", handle_turn_on)
     hass.services.async_register("light", "turn_off", handle_turn_off)
+    return calls
+
+
+@pytest.fixture
+def notify_service_calls(
+    hass: HomeAssistant,
+    automations_yaml: list[dict[str, Any]],
+) -> list[ServiceCall]:
+    """Register fake notify services so push actions stay observable in tests."""
+    calls: list[ServiceCall] = []
+
+    async def handle_notify(call: ServiceCall) -> None:
+        calls.append(call)
+
+    for automation in automations_yaml:
+        for action in automation.get("actions", []):
+            action_name = action.get("action", "")
+            if action_name.startswith("notify."):
+                service = action_name.split(".", 1)[1]
+                if not hass.services.has_service("notify", service):
+                    hass.services.async_register("notify", service, handle_notify)
+
     return calls
