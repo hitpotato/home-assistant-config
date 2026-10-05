@@ -1,5 +1,5 @@
 - actions:
-  - action: notify.mobile_app_public_phone_99079600d33b1fe0
+  - action: notify.mobile_app_public_phone_0444f1cc68c48a4c
     data:
       data:
         push:
@@ -20,17 +20,14 @@
   mode: single
   triggers:
   - above: 40
-    device_id: masked_device_d86b156fa10342b3
-    domain: sensor
-    entity_id: masked_entity_c5efff554067fe4d
+    entity_id: sensor.alpstuga_air_quality_monitor_pm2_5
     for:
       hours: 0
       minutes: 0
       seconds: 20
-    trigger: device
-    type: pm25
+    trigger: numeric_state
 - actions:
-  - action: notify.mobile_app_public_phone_99079600d33b1fe0
+  - action: notify.mobile_app_public_phone_0444f1cc68c48a4c
     data:
       data:
         push:
@@ -51,15 +48,12 @@
   mode: single
   triggers:
   - above: 1000
-    device_id: masked_device_d86b156fa10342b3
-    domain: sensor
-    entity_id: masked_entity_fc0254c17af7fc1e
+    entity_id: sensor.alpstuga_air_quality_monitor_carbon_dioxide
     for:
       hours: 0
       minutes: 1
       seconds: 0
-    trigger: device
-    type: carbon_dioxide
+    trigger: numeric_state
 - actions:
   - choose:
     - conditions:
@@ -342,7 +336,7 @@
     event_type: timer.finished
     id: hold_timer_finished
     trigger: event
-  - entity_id: media_player.sony_xr_65a95l_2
+  - entity_id: media_player.sony_tv
     id: tv_changed
     trigger: state
   - entity_id: switch.grillplats_plug
@@ -371,7 +365,7 @@
     entity_id: binary_sensor.bedroom_occupancy
     state: 'off'
   - condition: state
-    entity_id: media_player.sony_xr_65a95l_2
+    entity_id: media_player.sony_tv
     state: 'off'
   - condition: state
     entity_id: input_boolean.focus_mode

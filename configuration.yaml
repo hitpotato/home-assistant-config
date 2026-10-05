@@ -18,6 +18,10 @@ input_boolean:
     name: Bedroom Sleep Override Active
   bedroom_focus_override_active:
     name: Bedroom Focus Override Active
+  sleeping_mode:
+    name: Sleeping Mode
+  focus_mode:
+    name: Focus Mode
 
   bedroom_auto_on_enabled:
     name: Bedroom Auto-On Enabled
@@ -41,6 +45,6 @@ template:
         device_class: occupancy
         state: >
           {{ is_state('binary_sensor.bedroom_activity', 'on')
-             or states('media_player.sony_xr_65a95l_2') not in ['off', 'unavailable', 'idle']
+             or states('media_player.sony_tv') not in ['off', 'unavailable', 'idle']
              or is_state('switch.grillplats_plug', 'on')
              or is_state('timer.bedroom_occupancy_hold', 'active') }}
