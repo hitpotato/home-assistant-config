@@ -1,5 +1,5 @@
 - actions:
-  - action: notify.mobile_app_public_phone_0444f1cc68c48a4c
+  - action: notify.mobile_app_public_phone_219d4b8e97d77b29
     data:
       data:
         push:
@@ -27,7 +27,7 @@
       seconds: 20
     trigger: numeric_state
 - actions:
-  - action: notify.mobile_app_public_phone_0444f1cc68c48a4c
+  - action: notify.mobile_app_public_phone_219d4b8e97d77b29
     data:
       data:
         push:
@@ -389,7 +389,7 @@
       sequence:
       - action: light.turn_on
         data:
-          brightness: 1
+          brightness_pct: 10
           color_temp_kelvin: 2200
           transition: 2
         target:
