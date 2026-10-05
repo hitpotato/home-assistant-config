@@ -138,6 +138,15 @@ def bedroom_hold_timer_automation_config(
 
 
 @pytest.fixture
+def late_night_dim_light_config(
+    automations_yaml: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Extract the tracked late-night dim light automation by id."""
+    automation = find_automation_by_id(automations_yaml, "1773030487845")
+    return {"automation": [automation]}
+
+
+@pytest.fixture
 def adaptive_lighting_calls(hass: HomeAssistant) -> list[ServiceCall]:
     """Capture calls to adaptive_lighting.apply during a test."""
     calls: list[ServiceCall] = []
